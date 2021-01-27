@@ -1,0 +1,106 @@
+#!/usr/bin/env bash
+
+# exit when any command fails
+set -eo pipefail
+
+input_gfa=false
+input_fasta=false
+output_gaf=false
+threads=1
+
+if [ $# -eq 0 ];
+then
+    show_help=true
+fi
+
+## TODO add options for GraphAligner
+## TODO add output-folder option?
+
+# read the options
+cmd=$0" "$@
+TEMP=`getopt -o g:f:o:t:h --long input-gfa:,input-fasta:,output-gaf:,threads:,help -n 'pggb' -- "$@"`
+eval set -- "$TEMP"
+
+# extract options and their arguments into variables.
+while true ; do
+    case "$1" in
+        -g|--input-gfa) input_gfa=$2 ; shift 2 ;;
+        -f|--input-fasta) input_fasta=$2 ; shift 2 ;;
+        -o|--output-gaf) output_gaf=$2 ; shift 2 ;;
+        -t|--threads) threads=$2 ; shift 2 ;;
+        -h|--help) show_help=true ; shift ;;
+        --) shift ; break ;;
+        *) echo $2 "Internal error!" ; exit 1 ;;
+    esac
+done
+
+if [[
+       $input_fasta == false
+    || $input_gfa == false
+    || $output_gaf == false
+   ]];
+then
+    show_help=true
+    >&2 echo "Mandatory arguments -g, -f, -o"
+fi
+
+if [ $show_help ];
+then
+    padding=`printf %${#0}s` # prints as many spaces as the length of $0
+    echo "usage: $0 -g <input-gfa> -f <input-fasta> -o <output-gaf> [options]"
+    echo
+    echo "options:"
+    echo "   [evaluation]"
+    echo "    -g, --input-gfa FILE        input GFA file"
+    echo "    -f, --input-fasta FILE      input FASTA file"
+    echo "    -o, --output-gaf FILE       output GAF file"
+    echo "   [general]"
+    echo "    -t, --threads N             number of compute threads to use in parallel steps"
+    echo "    -h, --help                  this text"
+    echo
+    echo "Uses GraphAligner to evaluate a pangenome graph."
+    exit
+fi
+
+f=$output_gaf
+
+date=`date "+%m-%d-%Y_%H:%M:%S"`
+log_file=$f.$date.log
+param_file=$f.$date.params.yml
+
+fmt="%C\n%Us user %Ss system %P cpu %es total %MKb max memory"
+timer=/usr/bin/time
+
+# write parameters to log_file:
+echo -e "Starting pgge on `date`\n" > $log_file
+echo -e "Command: $cmd\n" >> $log_file
+echo -e "PARAMETERS\n" >> $log_file
+
+cat <<EOT | tee -a $log_file $param_file >/dev/null
+evaluation:
+  input-gfa:          $input_gfa
+  input-fasta:        $input_fasta
+  output-gaf:         $output_gaf
+general:
+  threads:            $threads
+EOT
+echo -e "\nRunning pgge\n" >> $log_file
+
+$timer -f "$fmt" GraphAligner \
+    -g $input_gfa \
+    -f $input_fasta \
+    -a $output_gaf \
+    -x vg \
+    -t $threads \
+    >/dev/null && cut -f 2,3,4,16 $output_gaf \
+    | sed s/id:f:// \
+    | awk '{ len=$3-$2; tlen+=len; sum+=$4*len; } END { print sum / tlen }' \
+    2> >(tee -a $log_file)
+## TODO 
+## Directly start from GAF
+
+## TODO 
+## Emit new evaluation metric
+$timer -f "$fmt" peanut \
+    -g $output_gaf \
+    2> >(tee -a $log_file)
