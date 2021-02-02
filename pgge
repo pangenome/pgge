@@ -14,7 +14,7 @@ then
 fi
 
 ## TODO add options for GraphAligner
-## TODO add output-folder option?
+## TODO add output-folder option
 
 # read the options
 cmd=$0" "$@
@@ -92,15 +92,17 @@ $timer -f "$fmt" GraphAligner \
     -a $output_gaf \
     -x vg \
     -t $threads \
-    >/dev/null && cut -f 2,3,4,16 $output_gaf \
+    2> >(tee -a $log_file)
+
+($timer -f "$fmt" cut -f 2,3,4,16 $output_gaf \
     | sed s/id:f:// \
     | awk '{ len=$3-$2; tlen+=len; sum+=$4*len; } END { print sum / tlen }' \
-    2> >(tee -a $log_file)
+    | tr "\n" "\t" \
+    1> $output_gaf.pgge) 2> >(tee -a $log_file) 
+
 ## TODO 
 ## Directly start from GAF
 
-## TODO 
-## Emit new evaluation metric
-$timer -f "$fmt" peanut \
+($timer -f "$fmt" peanut \
     -g $output_gaf \
-    2> >(tee -a $log_file)
+    1>> $output_gaf.pgge) 2> >(tee -a $log_file)
