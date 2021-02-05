@@ -5,6 +5,7 @@ set -eo pipefail
 
 input_gfa=false
 input_fasta=false
+input_gaf=false
 output_gaf=false
 threads=1
 
@@ -18,7 +19,7 @@ fi
 
 # read the options
 cmd=$0" "$@
-TEMP=`getopt -o g:f:o:t:h --long input-gfa:,input-fasta:,output-gaf:,threads:,help -n 'pggb' -- "$@"`
+TEMP=`getopt -o g:f:i:o:t:h --long input-gfa:,input-fasta:,input-gaf:,output-gaf:,threads:,help -n 'pggb' -- "$@"`
 eval set -- "$TEMP"
 
 # extract options and their arguments into variables.
@@ -26,6 +27,7 @@ while true ; do
     case "$1" in
         -g|--input-gfa) input_gfa=$2 ; shift 2 ;;
         -f|--input-fasta) input_fasta=$2 ; shift 2 ;;
+        -i|--input-gaf) input_gaf=$2 ; shift 2 ;;
         -o|--output-gaf) output_gaf=$2 ; shift 2 ;;
         -t|--threads) threads=$2 ; shift 2 ;;
         -h|--help) show_help=true ; shift ;;
@@ -35,30 +37,49 @@ while true ; do
 done
 
 if [[
-       $input_fasta == false
-    || $input_gfa == false
-    || $output_gaf == false
-   ]];
+    $input_gaf == false
+    ]];
 then
+    if [[
+           $input_fasta == false
+        || $input_gfa == false
+        || $output_gaf == false
+    ]];
+    then 
     show_help=true
-    >&2 echo "Mandatory arguments -g, -f, -o"
+    >&2 echo "Mandatory arguments -g, -f, -o. If running in GAF-MODE, only -i is required."
+    fi
+else
+    if [[
+           $input_fasta != false
+        || $input_gfa != false
+        || $output_gaf != false
+    ]];
+    then 
+    show_help=true
+    >&2 echo "Running in GAF-MODE, only -i is a mandatory argument. Please remove any non GAF-MODE arguments -g, -f, -o."
+    fi
 fi
 
 if [ $show_help ];
 then
     padding=`printf %${#0}s` # prints as many spaces as the length of $0
-    echo "usage: $0 -g <input-gfa> -f <input-fasta> -o <output-gaf> [options]"
+    echo "usage:    $0 -g <input-gfa> -f <input-fasta> -o <output-gaf> [options]"
+    echo
+    echo "GAF-MODE: $0 -i <input-gaf> [options]"
     echo
     echo "options:"
     echo "   [evaluation]"
     echo "    -g, --input-gfa FILE        input GFA file"
     echo "    -f, --input-fasta FILE      input FASTA file"
     echo "    -o, --output-gaf FILE       output GAF file"
+    echo "   [evaluation-gaf-mode]"
+    echo "    -i, --input-gaf FILE        input GFA file"
     echo "   [general]"
     echo "    -t, --threads N             number of compute threads to use in parallel steps"
     echo "    -h, --help                  this text"
     echo
-    echo "Uses GraphAligner to evaluate a pangenome graph."
+    echo "Uses GraphAligner and peanut to evaluate a pangenome graph."
     exit
 fi
 
@@ -86,22 +107,33 @@ general:
 EOT
 echo -e "\nRunning pgge\n" >> $log_file
 
-$timer -f "$fmt" GraphAligner \
-    -g $input_gfa \
-    -f $input_fasta \
-    -a $output_gaf \
-    -x vg \
-    -t $threads \
-    2> >(tee -a $log_file)
 
-($timer -f "$fmt" cut -f 2,3,4,16 $output_gaf \
-    | sed s/id:f:// \
-    | awk '{ len=$3-$2; tlen+=len; sum+=$4*len; } END { print sum / tlen }' \
-    | tr "\n" "\t" \
-    1> $output_gaf.pgge) 2> >(tee -a $log_file) 
+if [[
+    $input_gaf == false
+    ]];
+then
+    $timer -f "$fmt" GraphAligner \
+        -g $input_gfa \
+        -f $input_fasta \
+        -a $output_gaf \
+        -x vg \
+        -t $threads \
+        2> >(tee -a $log_file)
 
-## TODO 
-## Directly start from GAF
+    ($timer -f "$fmt" cut -f 2,3,4,16 $output_gaf \
+        | sed s/id:f:// \
+        | awk '{ len=$3-$2; tlen+=len; sum+=$4*len; } END { print sum / tlen }' \
+        | tr "\n" "\t" \
+        1> $output_gaf.pgge) 2> >(tee -a $log_file) 
+fi
+
+if [[
+    $input_gaf != false
+    ]];
+then
+    output_gaf=$input_gaf
+    echo "" > $output_gaf.pgge
+fi
 
 ($timer -f "$fmt" peanut \
     -g $output_gaf \

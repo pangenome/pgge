@@ -58,7 +58,7 @@ TODO
 ## TODOs
 - [ ] Finish README.
 - [ ] Explain `aid`.
-- [ ] Add option to directly start from GAF file.
+- [x] Add option to directly start from GAF file.
 - [ ] The user should be able to select options for GraphAligner.
 - [ ] Add usage examples for _`minigraph`_, _`cactus`_, and _`SibeliaZ`_.
 - [ ] Add Dockerfile.
