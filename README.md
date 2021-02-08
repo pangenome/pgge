@@ -56,8 +56,11 @@ The first number is the `algn.id`, the second number is the  [qsm](https://githu
 TODO
 
 ## TODOs
+- [ ] _`pgge`_ should accept a list of GFA files as input (_path/to/files/*.consensus*.gfa_) and output the summarized results in one PNG
 - [ ] Integrate https://github.com/ekg/splitfa as an option to prepare the input FASTA.
 - [ ] Add the possibility to split the input by sample name. Later re-use that information in the final result. 
+- [ ] Add R script to visualize the result.
+- [ ] Implement a tool that compares the query aligments with the exact nodes they aligned to in the graph. We might need a positional index for that. Add the tool here and output another metric.
 - [ ] Finish README.
 - [ ] Explain `algn.id`.
 - [x] Add option to directly start from GAF file.
@@ -65,7 +68,5 @@ TODO
 - [ ] Add usage examples for _`minigraph`_, _`cactus`_, and _`SibeliaZ`_.
 - [ ] Add Dockerfile.
 - [ ] Add a CI building the Dockerfile and emitting evaluation metrics for all tools using `HLA-Zoo` data.
-- [ ] _`pgge`_ should accept a list of GFA files as input (_path/to/files/*.consensus*.gfa_) and output the summarized results in one PNG
 - [ ] Add output-folder option.
 - [ ] Integrate into nf-core/pangenome pipeline.
-- [ ] Add R script to visualize the result.
