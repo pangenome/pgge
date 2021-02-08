@@ -50,19 +50,22 @@ The output is written to `input.gaf.pgge` in a tab-delimited format:
 ```
 0.994424	0.9929550476154135	0.9970526308543786
 ```
-The first number is the `aid`, the second number is the  [qsm](https://github.com/subwaystation/rs-peanut#query-sequence-match-qsm), and the third number is the [qsamm](https://github.com/subwaystation/rs-peanut#query-sequence-alignment-match-mismatch-qsamm).
+The first number is the `algn.id`, the second number is the  [qsm](https://github.com/subwaystation/rs-peanut#query-sequence-match-qsm), and the third number is the [qsamm](https://github.com/subwaystation/rs-peanut#query-sequence-alignment-match-mismatch-qsamm).
 
 ## installation
 TODO
 
 ## TODOs
+- [ ] Integrate https://github.com/ekg/splitfa as an option to prepare the input FASTA.
+- [ ] Add the possibility to split the input by sample name. Later re-use that information in the final result. 
 - [ ] Finish README.
-- [ ] Explain `aid`.
+- [ ] Explain `algn.id`.
 - [x] Add option to directly start from GAF file.
 - [ ] The user should be able to select options for GraphAligner.
 - [ ] Add usage examples for _`minigraph`_, _`cactus`_, and _`SibeliaZ`_.
 - [ ] Add Dockerfile.
 - [ ] Add a CI building the Dockerfile and emitting evaluation metrics for all tools using `HLA-Zoo` data.
-- [ ] Should _`pgge`_ accept several files as input and output the results in one file?
+- [ ] _`pgge`_ should accept a list of GFA files as input (_path/to/files/*.consensus*.gfa_) and output the summarized results in one PNG
 - [ ] Add output-folder option.
 - [ ] Integrate into nf-core/pangenome pipeline.
+- [ ] Add R script to visualize the result.
