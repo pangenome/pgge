@@ -10,6 +10,7 @@ output_gaf=false
 splitfa=false
 seq_length=false
 step=false
+beehave_R=false
 threads=1
 
 if [ $# -eq 0 ];
@@ -22,7 +23,7 @@ fi
 
 # read the options
 cmd=$0" "$@
-TEMP=`getopt -o g:f:i:o:l:s:t:h --long input-gfa:,input-fasta:,input-gaf:,output-gaf:,seq_length:,step:,threads:,help -n 'pggb' -- "$@"`
+TEMP=`getopt -o g:f:i:r:o:l:s:t:h --long input-gfa:,input-fasta:,input-gaf:,beehave-r:,output-gaf:,seq_length:,step:,threads:,help -n 'pggb' -- "$@"`
 eval set -- "$TEMP"
 
 # extract options and their arguments into variables.
@@ -31,6 +32,7 @@ while true ; do
         -g|--input-gfa) input_gfa=$2 ; shift 2 ;;
         -f|--input-fasta) input_fasta=$2 ; shift 2 ;;
         -i|--input-gaf) input_gaf=$2 ; shift 2 ;;
+        -r|--beehave-r) beehave_R=$2 ; shift 2 ;;
         -o|--output-gaf) output_gaf=$2 ; shift 2 ;;
         -l|--seq-length) seq_length=$2 ; shift 2 ;;
         -s|--step) step=$2 ; shift 2 ;;
@@ -49,10 +51,11 @@ then
            $input_fasta == false
         || $input_gfa == false
         || $output_gaf == false
+        || $beehave_R == false
     ]];
     then 
     show_help=true
-    >&2 echo "Mandatory arguments -g, -f, -o. If running in GAF-MODE, only -i is required."
+    >&2 echo "Mandatory arguments -g, -f, -o, -r. If running in GAF-MODE, only -i, -r are required."
     fi
 else
     if [[
@@ -62,7 +65,7 @@ else
     ]];
     then 
     show_help=true
-    >&2 echo "Running in GAF-MODE, only -i is a mandatory argument. Please remove any non GAF-MODE arguments -g, -f, -o."
+    >&2 echo "Running in GAF-MODE, only -i, -r are a mandatory argument. Please remove any non GAF-MODE arguments -g, -f, -o, -r."
     fi
 fi
 
@@ -112,6 +115,7 @@ then
     echo "    -g, --input-gfa FILE        input GFA file"
     echo "    -f, --input-fasta FILE      input FASTA file"
     echo "    -o, --output-gaf FILE       output GAF file"
+    echo "    -r, --beehave-r PATH        path to beehave.R"
     echo "   [splitfa]"
     echo "    -l, --seq-length N          length of the splits"
     echo "    -s, --step N                step size between splits"
@@ -177,6 +181,36 @@ then
     done 2> >(tee -a $log_file)
 fi
 
+#cat $input_fai| cut -f 1 | cut -f 1 -d. | cut -f 1 -d '#' | sort | uniq | while read n; \
+#do
+#    $timer -f "$fmt" GraphAligner \
+#        -g $input_gfa \
+#        -f $input_fai.$n.splitfa.l100000s50000.fa \
+#        -a $input_fai.$n.splitfa.fa.l100000s50000.fa.$output_gaf \
+#        -x vg \
+#        -t $threads \
+#        2> >(tee -a $log_file)
+#    ($timer -f "$fmt" cut -f 2,3,4,16 $input_fai.$n.splitfa.fa.l100000s50000.fa.$output_gaf \
+#        | sed s/id:f:// \
+#        | awk '{ len=$3-$2; tlen+=len; sum+=$4*len; } END { print sum / tlen }' \
+#        | tr "\n" "\t" \
+#        1> $input_fai.$n.splitfa.fa.l100000s50000.fa.$output_gaf.pgge) 2> >(tee -a $log_file) 
+#    ($timer -f "$fmt" peanut \
+#        -g $input_fai.$n.splitfa.fa.l100000s50000.fa.$output_gaf \
+#        1>> $input_fai.$n.splitfa.fa.l100000s50000.fa.$output_gaf.pgge) 2> >(tee -a $log_file);
+#done
+
+input_gfa="$(basename -- $input_gfa)"
+
+(echo sample.name cons.jump aln.id qsc uniq multi nonaln; ls | grep splitfa | grep pgge$ | while read f; \
+do 
+    echo $(echo $f | cut -f 5 -d .) $(echo $f | cut -f 2 -d @ | cut -f 1 -d. ) $(cat $f); \
+done) | tr ' ' '\t' > $input_gfa.pgge.tsv
+
+$timer -f "$fmt" Rscript \
+    $beehave_R $input_gfa.pgge.tsv \
+    $input_gfa.pgge.tsv.png \
+    2> >(tee -a $log_file)
 # TODO
 exit 0
 
