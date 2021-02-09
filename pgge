@@ -7,6 +7,9 @@ input_gfa=false
 input_fasta=false
 input_gaf=false
 output_gaf=false
+splitfa=false
+seq_length=false
+step=false
 threads=1
 
 if [ $# -eq 0 ];
@@ -19,7 +22,7 @@ fi
 
 # read the options
 cmd=$0" "$@
-TEMP=`getopt -o g:f:i:o:t:h --long input-gfa:,input-fasta:,input-gaf:,output-gaf:,threads:,help -n 'pggb' -- "$@"`
+TEMP=`getopt -o g:f:i:o:l:s:t:h --long input-gfa:,input-fasta:,input-gaf:,output-gaf:,seq_length:,step:,threads:,help -n 'pggb' -- "$@"`
 eval set -- "$TEMP"
 
 # extract options and their arguments into variables.
@@ -29,6 +32,8 @@ while true ; do
         -f|--input-fasta) input_fasta=$2 ; shift 2 ;;
         -i|--input-gaf) input_gaf=$2 ; shift 2 ;;
         -o|--output-gaf) output_gaf=$2 ; shift 2 ;;
+        -l|--seq-length) seq_length=$2 ; shift 2 ;;
+        -s|--step) step=$2 ; shift 2 ;;
         -t|--threads) threads=$2 ; shift 2 ;;
         -h|--help) show_help=true ; shift ;;
         --) shift ; break ;;
@@ -61,6 +66,40 @@ else
     fi
 fi
 
+# do we need to use splitfa?
+if [[
+    $seq_length != false 
+    ]];
+then
+    if [[
+        $step == false
+    ]];
+    then
+        show_help=true
+        >&2 echo "Mandatory arguments to run splitfa are -l and -s."
+    fi
+fi   
+
+if [[
+    $step != false 
+    ]];
+then
+    if [[
+        $seq_length == false
+    ]];
+    then
+        show_help=true
+        >&2 echo "Mandatory arguments to run splitfa are -l and -s."
+    fi
+fi    
+
+if [[
+    $step != false ]] && [[ $seq_length != false
+    ]];
+then   
+    splitfa=true
+fi
+
 if [ $show_help ];
 then
     padding=`printf %${#0}s` # prints as many spaces as the length of $0
@@ -73,6 +112,9 @@ then
     echo "    -g, --input-gfa FILE        input GFA file"
     echo "    -f, --input-fasta FILE      input FASTA file"
     echo "    -o, --output-gaf FILE       output GAF file"
+    echo "   [splitfa]"
+    echo "    -l, --seq-length N          length of the splits"
+    echo "    -s, --step N                step size between splits"
     echo "   [evaluation-gaf-mode]"
     echo "    -i, --input-gaf FILE        input GFA file"
     echo "   [general]"
@@ -97,6 +139,7 @@ echo -e "Starting pgge on `date`\n" > $log_file
 echo -e "Command: $cmd\n" >> $log_file
 echo -e "PARAMETERS\n" >> $log_file
 
+# TODO UPDATE THIS
 cat <<EOT | tee -a $log_file $param_file >/dev/null
 evaluation:
   input-gfa:          $input_gfa
@@ -107,6 +150,35 @@ general:
 EOT
 echo -e "\nRunning pgge\n" >> $log_file
 
+# do we already have a FASTA index for the input_fasta?
+if [[
+    ! -f $input_fasta.fai
+    ]];
+then
+    $timer -f "$fmt" samtools \
+    faidx $input_fasta \
+    2> >(tee -a $log_file)
+fi
+input_fai=$input_fasta.fai
+
+echo $input_fai
+
+# split into samples by "." and then by "#" always taking the first hit
+cat $input_fai| cut -f 1 | cut -f 1 -d. | cut -f 1 -d '#' | sort | uniq | while read n; \
+do $timer -f "$fmt" samtools faidx $input_fasta $(grep $n $input_fai | cut -f 1) > $input_fai.$n.fa; \
+done 2> >(tee -a $log_file)
+
+if [[
+    $splitfa != false
+    ]];
+then
+    cat $input_fai| cut -f 1 | cut -f 1 -d. | cut -f 1 -d '#' | sort | uniq | while read n; \
+    do $timer -f "$fmt" splitfa $input_fai.$n.fa -l $seq_length -s $step > $input_fai.$n.splitfa.l100000s50000.fa; \
+    done 2> >(tee -a $log_file)
+fi
+
+# TODO
+exit 0
 
 if [[
     $input_gaf == false
