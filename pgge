@@ -121,12 +121,12 @@ then
     echo "    -l, --seq-length N          length of the splits"
     echo "    -s, --step N                step size between splits"
     echo "   [evaluation-gaf-mode]"
-    echo "    -i, --input-gaf FILE        input GFA file"
+    echo "    -i, --input-gaf FILE        input GAF file"
     echo "   [general]"
     echo "    -t, --threads N             number of compute threads to use in parallel steps"
     echo "    -h, --help                  this text"
     echo
-    echo "Uses GraphAligner and peanut to evaluate a pangenome graph."
+    echo "Uses GraphAligner and peanut to evaluate a pangenome graph. Utilizes samtools and splitfa."
     exit
 fi
 
@@ -161,13 +161,15 @@ general:
 EOT
 echo -e "\nRunning pgge\n" >> $log_file
 
-# does the input GFA actually exist?
+if [[ $input_gaf == false ]];
+then
 
+# does the input GFA actually exist?
 if [[
     ! -f $input_gfa
     ]];
 then
-    >&2 echo "$input_gfa does not exist. Please correct and re-run pgge."
+    >&2 echo "$input_gfa GFA does not exist! Please correct and re-run pgge."
     exit
 fi
 
@@ -223,6 +225,32 @@ do
         -g $prefix_pgge.$n.$input_gfa_base.gaf \
         1>> $prefix_pgge.$n.$input_gfa_base.gaf.pgge) 2> >(tee -a $log_file);
 done
+
+else
+# GAF
+echo "in input_gaf mode"
+# does the input GFA actually exist?
+if [[
+    ! -f $input_gaf
+    ]];
+then
+    >&2 echo "$input_gaf GAF does not exist! Please correct and re-run pgge."
+    exit
+fi
+
+echo $input_gaf
+input_gaf_base="$(basename -- $input_gaf)"
+
+($timer -f "$fmt" cut -f 2,3,4,16 $input_gaf \
+    | sed s/id:f:// \
+    | awk '{ len=$3-$2; tlen+=len; sum+=$4*len; } END { print sum / tlen }' \
+    | tr "\n" "\t" \
+    1> $prefix_pgge.$input_gaf_base.pgge) 2> >(tee -a $log_file) 
+($timer -f "$fmt" peanut \
+    -g $input_gaf \
+    1>> $prefix_pgge.$input_gaf_base.pgge) 2> >(tee -a $log_file);
+
+fi
 
 (echo sample.name cons.jump aln.id qsc uniq multi nonaln; ls | grep gaf | grep pgge$ | while read f; \
 do 
