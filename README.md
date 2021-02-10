@@ -15,7 +15,7 @@ It has five phases:
 
 4. _[peanut](https://github.com/subwaystation/rs-peanut)_: (*alignment evaluation*) -- SHORT DESCRIPTION. TODO.
 
-5. _[beehave.R]()_: (*plot evaluation results*) -- SHORT DESCRIPTION. TODO.
+5. _[beehave.R](https://github.com/pangenome/pgge/tree/master/scripts/beehave.R)_: (*plot evaluation results*) -- SHORT DESCRIPTION. TODO.
 
 ## general usage
 
