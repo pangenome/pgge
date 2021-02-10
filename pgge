@@ -94,14 +94,14 @@ then
     fi
 fi    
 
-infix_pgge=pgge
+prefix_pgge=pgge
 
 if [[
     $step != false ]] && [[ $seq_length != false
     ]];
 then   
     splitfa=true
-    infix_pgge="$infix_pgge"-l$seq_length-s$step
+    prefix_pgge="$prefix_pgge"-l$seq_length-s$step
 fi
 
 if [ $show_help ];
@@ -137,10 +137,10 @@ if [[ "$output_dir" != "" ]]; then
 fi
 
 date=`date "+%m-%d-%Y_%H:%M:%S"`
-log_file=$output_dir/$infix_pgge.$date.log
-param_file=$output_dir/$infix_pgge.$date.params.yml
+log_file=$output_dir/$prefix_pgge.$date.log
+param_file=$output_dir/$prefix_pgge.$date.params.yml
 
-infix_pgge="$output_dir"/$infix_pgge
+prefix_pgge="$output_dir"/$prefix_pgge
 
 fmt="%C\n%Us user %Ss system %P cpu %es total %MKb max memory"
 timer=/usr/bin/time
@@ -161,6 +161,16 @@ general:
 EOT
 echo -e "\nRunning pgge\n" >> $log_file
 
+# does the input GFA actually exist?
+
+if [[
+    ! -f $input_gfa
+    ]];
+then
+    >&2 echo "$input_gfa does not exist. Please correct and re-run pgge."
+    exit
+fi
+
 # do we already have a FASTA index for the input_fasta?
 if [[
     ! -f $input_fasta.fai
@@ -174,7 +184,7 @@ input_fai=$input_fasta.fai
 
 # split into samples by "." and then by "#" always taking the first hit
 cat $input_fai| cut -f 1 | cut -f 1 -d. | cut -f 1 -d '#' | sort | uniq | while read n; \
-do $timer -f "$fmt" samtools faidx $input_fasta $(grep $n $input_fai | cut -f 1) > $infix_pgge.$n.$input_fasta; \
+do $timer -f "$fmt" samtools faidx $input_fasta $(grep $n $input_fai | cut -f 1) > $prefix_pgge.$n.$input_fasta; \
 done 2> >(tee -a $log_file)
 
 if [[
@@ -182,7 +192,7 @@ if [[
     ]];
 then
     cat $input_fai| cut -f 1 | cut -f 1 -d. | cut -f 1 -d '#' | sort | uniq | while read n; \
-    do $timer -f "$fmt" splitfa $infix_pgge.$n.$input_fasta -l $seq_length -s $step > $infix_pgge.$n.$input_fasta.splitfa.fa; \
+    do $timer -f "$fmt" splitfa $prefix_pgge.$n.$input_fasta -l $seq_length -s $step > $prefix_pgge.$n.$input_fasta.splitfa.fa; \
     done 2> >(tee -a $log_file)
 fi
 
@@ -190,29 +200,36 @@ input_gfa_base="$(basename -- $input_gfa)"
 
 cat $input_fai| cut -f 1 | cut -f 1 -d. | cut -f 1 -d '#' | sort | uniq | while read n; \
 do
+    graph_aligner_fasta_input=$prefix_pgge.$n.$input_fasta
+    if [[
+        $splitfa != false
+        ]];
+    then
+        graph_aligner_fasta_input=$prefix_pgge.$n.$input_fasta.splitfa.fa
+    fi
     $timer -f "$fmt" GraphAligner \
         -g $input_gfa \
-        -f $infix_pgge.$n.$input_fasta.splitfa.fa \
-        -a $infix_pgge.$n.$input_gfa_base.gaf \
+        -f $graph_aligner_fasta_input \
+        -a $prefix_pgge.$n.$input_gfa_base.gaf \
         -x vg \
         -t $threads \
         2> >(tee -a $log_file)
-    ($timer -f "$fmt" cut -f 2,3,4,16 $infix_pgge.$n.$input_gfa_base.gaf \
+    ($timer -f "$fmt" cut -f 2,3,4,16 $prefix_pgge.$n.$input_gfa_base.gaf \
         | sed s/id:f:// \
         | awk '{ len=$3-$2; tlen+=len; sum+=$4*len; } END { print sum / tlen }' \
         | tr "\n" "\t" \
-        1> $infix_pgge.$n.$input_gfa_base.gaf.pgge) 2> >(tee -a $log_file) 
+        1> $prefix_pgge.$n.$input_gfa_base.gaf.pgge) 2> >(tee -a $log_file) 
     ($timer -f "$fmt" peanut \
-        -g $infix_pgge.$n.$input_gfa_base.gaf \
-        1>> $infix_pgge.$n.$input_gfa_base.gaf.pgge) 2> >(tee -a $log_file);
+        -g $prefix_pgge.$n.$input_gfa_base.gaf \
+        1>> $prefix_pgge.$n.$input_gfa_base.gaf.pgge) 2> >(tee -a $log_file);
 done
 
 (echo sample.name cons.jump aln.id qsc uniq multi nonaln; ls | grep gaf | grep pgge$ | while read f; \
 do 
     echo $(echo $f | cut -f 2 -d .) $(echo $f | cut -f 2 -d @ | cut -f 1 -d. ) $(cat $f); \
-done) | tr ' ' '\t' > $infix_pgge.tsv
+done) | tr ' ' '\t' > $prefix_pgge.tsv
 
 $timer -f "$fmt" Rscript \
-    $beehave_R $infix_pgge.tsv \
-    $infix_pgge.tsv.png \
+    $beehave_R $prefix_pgge.tsv \
+    $prefix_pgge.tsv.png \
     2> >(tee -a $log_file)

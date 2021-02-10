@@ -58,7 +58,7 @@ TODO
 ## TODOs
 - [ ] _`pgge`_ should accept a list of GFA files as input (_path/to/files/*.consensus*.gfa_) and output the summarized results in one PNG
 - [x] Integrate https://github.com/ekg/splitfa as an option to prepare the input FASTA.
-- [x] Add the possibility to split the input by sample name. Later re-use that information in the final result. 
+- [x] Add the possibility to split the input by sample name. Later re-use that information in the final result. THIS IS THE NEW DEFAULT. 
 - [x] Add R script to visualize the result.
 - [ ] Implement a tool that compares the query aligments with the exact nodes they aligned to in the graph. We might need a positional index for that. Add the tool here and output another metric.
 - [ ] Finish README.
@@ -68,5 +68,5 @@ TODO
 - [ ] Add usage examples for _`minigraph`_, _`cactus`_, and _`SibeliaZ`_.
 - [ ] Add Dockerfile.
 - [ ] Add a CI building the Dockerfile and emitting evaluation metrics for all tools using `HLA-Zoo` data.
-- [ ] Add output-folder option.
+- [x] Add output-folder option.
 - [ ] Integrate into nf-core/pangenome pipeline.
