@@ -50,19 +50,19 @@ The output is written to `input.gaf.pgge` in a tab-delimited format:
 ```
 0.994424	0.9929550476154135	0.9970526308543786
 ```
-The first number is the `algn.id`, the second number is the  [qsm](https://github.com/subwaystation/rs-peanut#query-sequence-match-qsm), and the third number is the [qsamm](https://github.com/subwaystation/rs-peanut#query-sequence-alignment-match-mismatch-qsamm).
+The first number is the `aln.id`, the second number is the  [qsm](https://github.com/subwaystation/rs-peanut#query-sequence-match-qsm), and the third number is the [qsamm](https://github.com/subwaystation/rs-peanut#query-sequence-alignment-match-mismatch-qsamm).
 
 ## installation
 TODO
 
 ## TODOs
 - [ ] _`pgge`_ should accept a list of GFA files as input (_path/to/files/*.consensus*.gfa_) and output the summarized results in one PNG
-- [ ] Integrate https://github.com/ekg/splitfa as an option to prepare the input FASTA.
-- [ ] Add the possibility to split the input by sample name. Later re-use that information in the final result. 
-- [ ] Add R script to visualize the result.
+- [x] Integrate https://github.com/ekg/splitfa as an option to prepare the input FASTA.
+- [x] Add the possibility to split the input by sample name. Later re-use that information in the final result. 
+- [x] Add R script to visualize the result.
 - [ ] Implement a tool that compares the query aligments with the exact nodes they aligned to in the graph. We might need a positional index for that. Add the tool here and output another metric.
 - [ ] Finish README.
-- [ ] Explain `algn.id`.
+- [ ] Explain `aln.id`.
 - [x] Add option to directly start from GAF file.
 - [ ] The user should be able to select options for GraphAligner.
 - [ ] Add usage examples for _`minigraph`_, _`cactus`_, and _`SibeliaZ`_.
