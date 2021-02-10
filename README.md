@@ -9,7 +9,7 @@ It has five phases:
 
 1. _`SplitSamples`_: (*sample preparation*) -- SHORT DESCRIPTION. TODO.
 
-2. _[splitfa]()_: (*split sequences*) -- SHORT DESCRIPTION. TODO.
+2. _[splitfa](https://github.com/ekg/splitfa)_: (*split sequences*) -- SHORT DESCRIPTION. TODO.
 
 3. _[GraphAligner](https://github.com/maickrau/GraphAligner)_: (*alignment*) -- SHORT DESCRIPTION. TODO.
 
@@ -84,7 +84,17 @@ _`pgge`_ also generates a visualization of the results `pgge_yeast/pgge-l100000-
 ![pgge_yeast.sh](examples/pgge-l100000-s50000.tsv.png)
 
 ## installation
-TODO
+
+### required tools
+1. _bash_
+
+2. _[samtools](http://www.htslib.org/)_
+
+3. _[splitfa](https://github.com/ekg/splitfa)_
+
+4. _[GraphAligner](https://github.com/maickrau/GraphAligner)_
+
+5. _[peanut](https://github.com/subwaystation/rs-peanut)_
 
 ## TODOs
 - [x] _`pgge`_ should accept a list of GFA files as input (_path/to/files/\*.consensus\*.gfa_) and output the summarized results in one PNG
