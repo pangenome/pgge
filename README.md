@@ -38,7 +38,7 @@ S288C.chrI
 S288C.chrII
 S288C.chrIII
 ```
-in your given FASTA file, the results will only contain one line of metrics. In this case for `S288C`. This is useful if you have contig seuquences in your FASTA and want to summarize by sample name. _`pgge`_ always splits by `.` and takes the first entry in the resulting split as sample name. 
+in your given FASTA file, the results will only contain one line of metrics. In this case for `S288C`. This is useful if you have contig sequences in your FASTA and want to summarize by sample name. _`pgge`_ always splits by `.` and takes the first entry in the resulting split as sample name. 
 
 ### output
 
