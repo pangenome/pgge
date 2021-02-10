@@ -169,10 +169,10 @@ then
 for gfa in $input_gfa
 do
     if [[
-        ! -f $input_gfa
+        ! -f $gfa
         ]];
     then
-        >&2 echo "$input_gfa GFA does not exist! Please correct and re-run pgge."
+        >&2 echo "$gfa GFA does not exist! Please correct and re-run pgge."
         exit
     fi
 done
