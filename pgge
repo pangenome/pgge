@@ -140,6 +140,8 @@ date=`date "+%m-%d-%Y_%H:%M:%S"`
 log_file=$output_dir/$infix_pgge.$date.log
 param_file=$output_dir/$infix_pgge.$date.params.yml
 
+infix_pgge="$output_dir"/$infix_pgge
+
 fmt="%C\n%Us user %Ss system %P cpu %es total %MKb max memory"
 timer=/usr/bin/time
 
@@ -186,24 +188,24 @@ fi
 
 input_gfa_base="$(basename -- $input_gfa)"
 
-#cat $input_fai| cut -f 1 | cut -f 1 -d. | cut -f 1 -d '#' | sort | uniq | while read n; \
-#do
-#    $timer -f "$fmt" GraphAligner \
-#        -g $input_gfa \
-#        -f $infix_pgge.$n.$input_fasta.splitfa.fa \
-#        -a $infix_pgge.$n.$input_gfa_base.gaf \
-#        -x vg \
-#        -t $threads \
-#        2> >(tee -a $log_file)
-#    ($timer -f "$fmt" cut -f 2,3,4,16 $infix_pgge.$n.$input_gfa_base.gaf \
-#        | sed s/id:f:// \
-#        | awk '{ len=$3-$2; tlen+=len; sum+=$4*len; } END { print sum / tlen }' \
-#        | tr "\n" "\t" \
-#        1> $infix_pgge.$n.$input_gfa_base.gaf.pgge) 2> >(tee -a $log_file) 
-#    ($timer -f "$fmt" peanut \
-#        -g $infix_pgge.$n.$input_gfa_base.gaf \
-#        1>> $infix_pgge.$n.$input_gfa_base.gaf.pgge) 2> >(tee -a $log_file);
-#done
+cat $input_fai| cut -f 1 | cut -f 1 -d. | cut -f 1 -d '#' | sort | uniq | while read n; \
+do
+    $timer -f "$fmt" GraphAligner \
+        -g $input_gfa \
+        -f $infix_pgge.$n.$input_fasta.splitfa.fa \
+        -a $infix_pgge.$n.$input_gfa_base.gaf \
+        -x vg \
+        -t $threads \
+        2> >(tee -a $log_file)
+    ($timer -f "$fmt" cut -f 2,3,4,16 $infix_pgge.$n.$input_gfa_base.gaf \
+        | sed s/id:f:// \
+        | awk '{ len=$3-$2; tlen+=len; sum+=$4*len; } END { print sum / tlen }' \
+        | tr "\n" "\t" \
+        1> $infix_pgge.$n.$input_gfa_base.gaf.pgge) 2> >(tee -a $log_file) 
+    ($timer -f "$fmt" peanut \
+        -g $infix_pgge.$n.$input_gfa_base.gaf \
+        1>> $infix_pgge.$n.$input_gfa_base.gaf.pgge) 2> >(tee -a $log_file);
+done
 
 (echo sample.name cons.jump aln.id qsc uniq multi nonaln; ls | grep gaf | grep pgge$ | while read f; \
 do 
