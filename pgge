@@ -6,7 +6,11 @@ set -eo pipefail
 input_gfa=false
 input_fasta=false
 input_gaf=false
-output_gaf=false
+output_dir="."
+splitfa=false
+seq_length=false
+step=false
+beehave_R=false
 threads=1
 
 if [ $# -eq 0 ];
@@ -19,7 +23,7 @@ fi
 
 # read the options
 cmd=$0" "$@
-TEMP=`getopt -o g:f:i:o:t:h --long input-gfa:,input-fasta:,input-gaf:,output-gaf:,threads:,help -n 'pggb' -- "$@"`
+TEMP=`getopt -o g:f:i:r:o:l:s:t:h --long input-gfa:,input-fasta:,input-gaf:,beehave-r:,output-dir:,seq_length:,step:,threads:,help -n 'pggb' -- "$@"`
 eval set -- "$TEMP"
 
 # extract options and their arguments into variables.
@@ -28,7 +32,10 @@ while true ; do
         -g|--input-gfa) input_gfa=$2 ; shift 2 ;;
         -f|--input-fasta) input_fasta=$2 ; shift 2 ;;
         -i|--input-gaf) input_gaf=$2 ; shift 2 ;;
-        -o|--output-gaf) output_gaf=$2 ; shift 2 ;;
+        -r|--beehave-r) beehave_R=$2 ; shift 2 ;;
+        -o|--output-dir) output_dir=$2 ; shift 2 ;;
+        -l|--seq-length) seq_length=$2 ; shift 2 ;;
+        -s|--step) step=$2 ; shift 2 ;;
         -t|--threads) threads=$2 ; shift 2 ;;
         -h|--help) show_help=true ; shift ;;
         --) shift ; break ;;
@@ -43,28 +50,64 @@ then
     if [[
            $input_fasta == false
         || $input_gfa == false
-        || $output_gaf == false
+        || $beehave_R == false
     ]];
     then 
     show_help=true
-    >&2 echo "Mandatory arguments -g, -f, -o. If running in GAF-MODE, only -i is required."
+    >&2 echo "Mandatory arguments -g, -f, -o, -r. If running in GAF-MODE, only -i, -r are required."
     fi
 else
     if [[
            $input_fasta != false
         || $input_gfa != false
-        || $output_gaf != false
     ]];
     then 
     show_help=true
-    >&2 echo "Running in GAF-MODE, only -i is a mandatory argument. Please remove any non GAF-MODE arguments -g, -f, -o."
+    >&2 echo "Running in GAF-MODE, only -i, -r are a mandatory argument. Please remove any non GAF-MODE arguments -g, -f, -o, -r."
     fi
+fi
+
+# do we need to use splitfa?
+if [[
+    $seq_length != false 
+    ]];
+then
+    if [[
+        $step == false
+    ]];
+    then
+        show_help=true
+        >&2 echo "Mandatory arguments to run splitfa are -l and -s."
+    fi
+fi   
+
+if [[
+    $step != false 
+    ]];
+then
+    if [[
+        $seq_length == false
+    ]];
+    then
+        show_help=true
+        >&2 echo "Mandatory arguments to run splitfa are -l and -s."
+    fi
+fi    
+
+prefix_pgge=pgge
+
+if [[
+    $step != false ]] && [[ $seq_length != false
+    ]];
+then   
+    splitfa=true
+    prefix_pgge="$prefix_pgge"-l$seq_length-s$step
 fi
 
 if [ $show_help ];
 then
     padding=`printf %${#0}s` # prints as many spaces as the length of $0
-    echo "usage:    $0 -g <input-gfa> -f <input-fasta> -o <output-gaf> [options]"
+    echo "usage:    $0 -g <input-gfa> -f <input-fasta> -r <beehave-r> [options]"
     echo
     echo "GAF-MODE: $0 -i <input-gaf> [options]"
     echo
@@ -72,22 +115,32 @@ then
     echo "   [evaluation]"
     echo "    -g, --input-gfa FILE        input GFA file"
     echo "    -f, --input-fasta FILE      input FASTA file"
-    echo "    -o, --output-gaf FILE       output GAF file"
+    echo "    -o, --output-dir FILE       output directory"
+    echo "    -r, --beehave-r PATH        path to beehave.R"
+    echo "   [splitfa]"
+    echo "    -l, --seq-length N          length of the splits"
+    echo "    -s, --step N                step size between splits"
     echo "   [evaluation-gaf-mode]"
-    echo "    -i, --input-gaf FILE        input GFA file"
+    echo "    -i, --input-gaf FILE        input GAF file"
     echo "   [general]"
     echo "    -t, --threads N             number of compute threads to use in parallel steps"
     echo "    -h, --help                  this text"
     echo
-    echo "Uses GraphAligner and peanut to evaluate a pangenome graph."
+    echo "Uses GraphAligner and peanut to evaluate a pangenome graph. Utilizes samtools and splitfa."
     exit
 fi
 
-f=$output_gaf
+if [[ "$output_dir" != "" ]]; then
+	if [ ! -e "$output_dir" ]; then
+		mkdir "$output_dir"
+	fi
+fi
 
 date=`date "+%m-%d-%Y_%H:%M:%S"`
-log_file=$f.$date.log
-param_file=$f.$date.params.yml
+log_file=$output_dir/$prefix_pgge.$date.log
+param_file=$output_dir/$prefix_pgge.$date.params.yml
+
+prefix_pgge="$output_dir"/$prefix_pgge
 
 fmt="%C\n%Us user %Ss system %P cpu %es total %MKb max memory"
 timer=/usr/bin/time
@@ -97,44 +150,122 @@ echo -e "Starting pgge on `date`\n" > $log_file
 echo -e "Command: $cmd\n" >> $log_file
 echo -e "PARAMETERS\n" >> $log_file
 
+# TODO UPDATE THIS
 cat <<EOT | tee -a $log_file $param_file >/dev/null
 evaluation:
   input-gfa:          $input_gfa
   input-fasta:        $input_fasta
-  output-gaf:         $output_gaf
+  output-dir:         $output_dir
 general:
   threads:            $threads
 EOT
 echo -e "\nRunning pgge\n" >> $log_file
 
+## START gfa_input
+if [[ $input_gaf == false ]];
+then
 
+# do the input GFAs actually exist?
+for gfa in $input_gfa
+do
+    if [[
+        ! -f $gfa
+        ]];
+    then
+        >&2 echo "$gfa GFA does not exist! Please correct and re-run pgge."
+        exit
+    fi
+done
+
+# do we already have a FASTA index for the input_fasta?
 if [[
-    $input_gaf == false
+    ! -f $input_fasta.fai
     ]];
 then
-    $timer -f "$fmt" GraphAligner \
-        -g $input_gfa \
-        -f $input_fasta \
-        -a $output_gaf \
-        -x vg \
-        -t $threads \
-        2> >(tee -a $log_file)
-
-    ($timer -f "$fmt" cut -f 2,3,4,16 $output_gaf \
-        | sed s/id:f:// \
-        | awk '{ len=$3-$2; tlen+=len; sum+=$4*len; } END { print sum / tlen }' \
-        | tr "\n" "\t" \
-        1> $output_gaf.pgge) 2> >(tee -a $log_file) 
+    $timer -f "$fmt" samtools \
+    faidx $input_fasta \
+    2> >(tee -a $log_file)
 fi
+input_fai=$input_fasta.fai
+
+# split into samples by "." and then by "#" always taking the first hit
+cat $input_fai| cut -f 1 | cut -f 1 -d. | cut -f 1 -d '#' | sort | uniq | while read n; \
+do $timer -f "$fmt" samtools faidx $input_fasta $(grep $n $input_fai | cut -f 1) > $prefix_pgge.$n.$input_fasta; \
+done 2> >(tee -a $log_file)
 
 if [[
-    $input_gaf != false
+    $splitfa != false
     ]];
 then
-    output_gaf=$input_gaf
-    echo "" > $output_gaf.pgge
+    cat $input_fai| cut -f 1 | cut -f 1 -d. | cut -f 1 -d '#' | sort | uniq | while read n; \
+    do $timer -f "$fmt" splitfa $prefix_pgge.$n.$input_fasta -l $seq_length -s $step > $prefix_pgge.$n.$input_fasta.splitfa.fa; \
+    done 2> >(tee -a $log_file)
 fi
 
+for gfa in $input_gfa
+do
+    gfa_base="$(basename -- $gfa)"
+
+    cat $input_fai| cut -f 1 | cut -f 1 -d. | cut -f 1 -d '#' | sort | uniq | while read n; \
+    do
+        graph_aligner_fasta_input=$prefix_pgge.$n.$input_fasta
+        if [[
+            $splitfa != false
+            ]];
+        then
+            graph_aligner_fasta_input=$prefix_pgge.$n.$input_fasta.splitfa.fa
+        fi
+        $timer -f "$fmt" GraphAligner \
+            -g $gfa \
+            -f $graph_aligner_fasta_input \
+            -a $prefix_pgge.$n.$gfa_base.gaf \
+            -x vg \
+            -t $threads \
+            2> >(tee -a $log_file)
+        ($timer -f "$fmt" cut -f 2,3,4,16 $prefix_pgge.$n.$gfa_base.gaf \
+            | sed s/id:f:// \
+            | awk '{ len=$3-$2; tlen+=len; sum+=$4*len; } END { print sum / tlen }' \
+            | tr "\n" "\t" \
+            1> $prefix_pgge.$n.$gfa_base.gaf.pgge) 2> >(tee -a $log_file) 
+        ($timer -f "$fmt" peanut \
+            -g $prefix_pgge.$n.$gfa_base.gaf \
+            1>> $prefix_pgge.$n.$gfa_base.gaf.pgge) 2> >(tee -a $log_file);
+    done
+done
+
+## END gfa_input
+else
+## START gaf_input
+# does the input GFA actually exist?
+if [[
+    ! -f $input_gaf
+    ]];
+then
+    >&2 echo "$input_gaf GAF does not exist! Please correct and re-run pgge."
+    exit
+fi
+
+echo $input_gaf
+input_gaf_base="$(basename -- $input_gaf)"
+
+($timer -f "$fmt" cut -f 2,3,4,16 $input_gaf \
+    | sed s/id:f:// \
+    | awk '{ len=$3-$2; tlen+=len; sum+=$4*len; } END { print sum / tlen }' \
+    | tr "\n" "\t" \
+    1> $prefix_pgge.$input_gaf_base.pgge) 2> >(tee -a $log_file) 
 ($timer -f "$fmt" peanut \
-    -g $output_gaf \
-    1>> $output_gaf.pgge) 2> >(tee -a $log_file)
+    -g $input_gaf \
+    1>> $prefix_pgge.$input_gaf_base.pgge) 2> >(tee -a $log_file);
+
+fi
+## END gaf_input
+
+(echo sample.name cons.jump aln.id qsc uniq multi nonaln; ls $output_dir | grep gaf | grep pgge$ | while read f; \
+do 
+    echo $(echo $output_dir/$f | cut -f 2 -d .) $(echo $output_dir/$f | cut -f 2 -d @ | cut -f 1 -d. ) $(cat $output_dir/$f); \
+done) | tr ' ' '\t' > $prefix_pgge.tsv
+
+$timer -f "$fmt" Rscript \
+    $beehave_R $prefix_pgge.tsv \
+    $prefix_pgge.tsv.png \
+    2> >(tee -a $log_file)
