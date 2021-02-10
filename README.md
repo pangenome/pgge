@@ -64,6 +64,7 @@ TODO
 - [ ] Finish README.
 - [ ] Explain `aln.id`.
 - [x] Add option to directly start from GAF file.
+- [ ] Add possibility to input several GAF files. Make sure the user can input a list of samples for the GAFs.
 - [ ] The user should be able to select options for GraphAligner.
 - [ ] Add usage examples for _`minigraph`_, _`cactus`_, and _`SibeliaZ`_.
 - [ ] Add Dockerfile.

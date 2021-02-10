@@ -161,17 +161,21 @@ general:
 EOT
 echo -e "\nRunning pgge\n" >> $log_file
 
+## START gfa_input
 if [[ $input_gaf == false ]];
 then
 
-# does the input GFA actually exist?
-if [[
-    ! -f $input_gfa
-    ]];
-then
-    >&2 echo "$input_gfa GFA does not exist! Please correct and re-run pgge."
-    exit
-fi
+# do the input GFAs actually exist?
+for gfa in $input_gfa
+do
+    if [[
+        ! -f $input_gfa
+        ]];
+    then
+        >&2 echo "$input_gfa GFA does not exist! Please correct and re-run pgge."
+        exit
+    fi
+done
 
 # do we already have a FASTA index for the input_fasta?
 if [[
@@ -198,37 +202,40 @@ then
     done 2> >(tee -a $log_file)
 fi
 
-input_gfa_base="$(basename -- $input_gfa)"
-
-cat $input_fai| cut -f 1 | cut -f 1 -d. | cut -f 1 -d '#' | sort | uniq | while read n; \
+for gfa in $input_gfa
 do
-    graph_aligner_fasta_input=$prefix_pgge.$n.$input_fasta
-    if [[
-        $splitfa != false
-        ]];
-    then
-        graph_aligner_fasta_input=$prefix_pgge.$n.$input_fasta.splitfa.fa
-    fi
-    $timer -f "$fmt" GraphAligner \
-        -g $input_gfa \
-        -f $graph_aligner_fasta_input \
-        -a $prefix_pgge.$n.$input_gfa_base.gaf \
-        -x vg \
-        -t $threads \
-        2> >(tee -a $log_file)
-    ($timer -f "$fmt" cut -f 2,3,4,16 $prefix_pgge.$n.$input_gfa_base.gaf \
-        | sed s/id:f:// \
-        | awk '{ len=$3-$2; tlen+=len; sum+=$4*len; } END { print sum / tlen }' \
-        | tr "\n" "\t" \
-        1> $prefix_pgge.$n.$input_gfa_base.gaf.pgge) 2> >(tee -a $log_file) 
-    ($timer -f "$fmt" peanut \
-        -g $prefix_pgge.$n.$input_gfa_base.gaf \
-        1>> $prefix_pgge.$n.$input_gfa_base.gaf.pgge) 2> >(tee -a $log_file);
+    gfa_base="$(basename -- $gfa)"
+
+    cat $input_fai| cut -f 1 | cut -f 1 -d. | cut -f 1 -d '#' | sort | uniq | while read n; \
+    do
+        graph_aligner_fasta_input=$prefix_pgge.$n.$input_fasta
+        if [[
+            $splitfa != false
+            ]];
+        then
+            graph_aligner_fasta_input=$prefix_pgge.$n.$input_fasta.splitfa.fa
+        fi
+        $timer -f "$fmt" GraphAligner \
+            -g $gfa \
+            -f $graph_aligner_fasta_input \
+            -a $prefix_pgge.$n.$gfa_base.gaf \
+            -x vg \
+            -t $threads \
+            2> >(tee -a $log_file)
+        ($timer -f "$fmt" cut -f 2,3,4,16 $prefix_pgge.$n.$gfa_base.gaf \
+            | sed s/id:f:// \
+            | awk '{ len=$3-$2; tlen+=len; sum+=$4*len; } END { print sum / tlen }' \
+            | tr "\n" "\t" \
+            1> $prefix_pgge.$n.$gfa_base.gaf.pgge) 2> >(tee -a $log_file) 
+        ($timer -f "$fmt" peanut \
+            -g $prefix_pgge.$n.$gfa_base.gaf \
+            1>> $prefix_pgge.$n.$gfa_base.gaf.pgge) 2> >(tee -a $log_file);
+    done
 done
 
+## END gfa_input
 else
-# GAF
-echo "in input_gaf mode"
+## START gaf_input
 # does the input GFA actually exist?
 if [[
     ! -f $input_gaf
@@ -251,9 +258,7 @@ input_gaf_base="$(basename -- $input_gaf)"
     1>> $prefix_pgge.$input_gaf_base.pgge) 2> >(tee -a $log_file);
 
 fi
-echo ""
-echo $(ls $output_dir | grep gaf | grep pgge$)
-echo ""
+## END gaf_input
 
 (echo sample.name cons.jump aln.id qsc uniq multi nonaln; ls $output_dir | grep gaf | grep pgge$ | while read f; \
 do 
