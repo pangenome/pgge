@@ -19,7 +19,6 @@ then
 fi
 
 ## TODO add options for GraphAligner
-## TODO add output-folder option
 
 # read the options
 cmd=$0" "$@
@@ -150,12 +149,17 @@ echo -e "Starting pgge on `date`\n" > $log_file
 echo -e "Command: $cmd\n" >> $log_file
 echo -e "PARAMETERS\n" >> $log_file
 
-# TODO UPDATE THIS
 cat <<EOT | tee -a $log_file $param_file >/dev/null
 evaluation:
   input-gfa:          $input_gfa
   input-fasta:        $input_fasta
   output-dir:         $output_dir
+  beehave-r:          $beehave_R
+splitfa:
+  seq-length:         $seq_length
+  step:               $step
+evaluation-gaf-mode:
+  input-gaf:          $input_gaf
 general:
   threads:            $threads
 EOT

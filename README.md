@@ -40,6 +40,8 @@ S288C.chrIII
 ```
 in your given FASTA file, the results will only contain one line of metrics. In this case for `S288C`. This is useful if you have contig sequences in your FASTA and want to summarize by sample name. _`pgge`_ always splits by `.` and takes the first entry in the resulting split as sample name. 
 
+:warning: In addition, _`pgge`_ assumes that there is *@NUMBER* in each name of the input GAFs. This *NUMBER* is extracted later and appears in the table and output plot as *cons.jump*, because _`pgge`_ was designed for processing the results of _`pggb`_. If you are evaluating your own data not originating from _`pggb`_ it is recommended to add a different *@NUMBER* for each of your input GAFs in order to better understand the resulting output.
+
 ### output
 
 The output is written to `pgge_yeast/pgge-l100000-s50000.tsv` in a tab-delimited format:
