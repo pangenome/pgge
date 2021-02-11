@@ -98,6 +98,8 @@ _`pgge`_ also generates a visualization of the results `pgge_yeast/pgge-l100000-
 
 5. _[peanut](https://github.com/subwaystation/rs-peanut)_
 
+6. _[R](https://www.r-project.org/)_ with packages _[tidyverse](https://www.tidyverse.org/)_, _[ggrepel](https://www.rdocumentation.org/packages/ggrepel/versions/0.9.1)_, _[gridExtra](https://www.rdocumentation.org/packages/gridExtra/versions/2.3)_ installed.
+
 ## TODOs
 - [x] _`pgge`_ should accept a list of GFA files as input (_path/to/files/\*.consensus\*.gfa_) and output the summarized results in one PNG
 - [x] Integrate https://github.com/ekg/splitfa as an option to prepare the input FASTA.
