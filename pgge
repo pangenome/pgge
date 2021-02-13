@@ -192,9 +192,11 @@ then
 fi
 input_fai=$input_fasta.fai
 
+input_fasta_base="$(basename -- "$input_fasta")"
+
 # split into samples by "." and then by "#" always taking the first hit
 cut -f 1 "$input_fai" | cut -f 1 -d. | cut -f 1 -d '#' | sort | uniq | while read n; \
-do $timer -f "$fmt" samtools faidx "$input_fasta" $(grep "$n" "$input_fai" | cut -f 1) > "$prefix_pgge"."$n"."$input_fasta"; \
+do $timer -f "$fmt" samtools faidx "$input_fasta" $(grep "$n" "$input_fai" | cut -f 1) > "$prefix_pgge"."$n"."$input_fasta_base"; \
 done 2> >(tee -a "$log_file")
 
 if [[
@@ -202,7 +204,7 @@ if [[
     ]];
 then
     cut -f 1 "$input_fai" | cut -f 1 -d. | cut -f 1 -d '#' | sort | uniq | while read n; \
-    do $timer -f "$fmt" splitfa "$prefix_pgge"."$n"."$input_fasta" -l "$seq_length" -s "$step" > "$prefix_pgge"."$n"."$input_fasta".splitfa.fa; \
+    do $timer -f "$fmt" splitfa "$prefix_pgge"."$n"."$input_fasta_base" -l "$seq_length" -s "$step" > "$prefix_pgge"."$n"."$input_fasta_base".splitfa.fa; \
     done 2> >(tee -a "$log_file")
 fi
 
@@ -212,12 +214,12 @@ do
 
     cut -f 1 "$input_fai" | cut -f 1 -d. | cut -f 1 -d '#' | sort | uniq | while read n; \
     do
-        graph_aligner_fasta_input=$prefix_pgge.$n.$input_fasta
+        graph_aligner_fasta_input=$prefix_pgge.$n.$input_fasta_base
         if [[
             $splitfa != false
             ]];
         then
-            graph_aligner_fasta_input=$prefix_pgge.$n.$input_fasta.splitfa.fa
+            graph_aligner_fasta_input=$prefix_pgge.$n.$input_fasta_base.splitfa.fa
         fi
         $timer -f "$fmt" GraphAligner \
             -g "$gfa" \
