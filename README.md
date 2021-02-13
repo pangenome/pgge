@@ -19,14 +19,23 @@ It has five phases:
 
 ## general usage
 
-Create our pangenome graph and consensus graphs using _`pggb`_:
+Clone this repository:
 
 ```
-pggb -i cerevisiae.pan.fa -s 50000 -p 90 -w 30000 -n 5 -t 16 -v -Y "#" -S -k 8 -B 10000000 -I 0.7 -o pggb -W -m -S
+git clone --recursive https://github.com/pangenome/pggb
+cd pgge
 ```
-Evaluate the consensus graphs.
+
+Create a pangenome graph and its consensus graphs using _`pggb`_, storing the results in the `pggb_yeast` directory (:warning:
+this step assumes you have correctly installed _`pggb`_):
+
 ```
-time pgge -g "pggb_yeast/*consensus*.gfa" -f cerevisiae.pan.fa  -t 16 -r ~/git/pgge/scripts/beehave.R  -l 100000 -s 50000 -o pgge_yeast
+pggb -i data/yeast/cerevisiae.pan.fa -s 50000 -p 90 -w 30000 -n 5 -t 16 -v -Y "#" -S -k 8 -B 10000000 -I 0.7 -o pggb_yeast -W -m -S
+```
+
+Evaluate the consensus graphs the `pggb_yeast` directory:
+```
+./pgge -g "pggb_yeast/*consensus*.gfa" -f data/yeast/cerevisiae.pan.fa  -t 16 -r ~/git/pgge/scripts/beehave.R  -l 100000 -s 50000 -o pgge_yeast
 ```
 Make sure that you include the opening and closing `"` in the command line, else the regex can't be resolved. For a single input GFA, this is not required.
 
