@@ -4,7 +4,7 @@ require(tidyverse)
 require(ggrepel)
 require(gridExtra)
 
-args = commandArgs(trailingOnly=T)
+args <- commandArgs(trailingOnly=T)
 
 input.pgge <- read.delim(args[1])
 aln.id <- ggplot(input.pgge, aes(x=as.factor(cons.jump), y=aln.id, label=sample.name)) + 

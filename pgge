@@ -51,7 +51,7 @@ then
         || $input_gfa == false
         || $beehave_R == false
     ]];
-    then 
+    then
     show_help=true
     >&2 echo "Mandatory arguments -g, -f, -o, -r. If running in GAF-MODE, only -i, -r are required."
     fi
@@ -60,7 +60,7 @@ else
            $input_fasta != false
         || $input_gfa != false
     ]];
-    then 
+    then
     show_help=true
     >&2 echo "Running in GAF-MODE, only -i, -r are a mandatory argument. Please remove any non GAF-MODE arguments -g, -f, -o, -r."
     fi
@@ -68,7 +68,7 @@ fi
 
 # do we need to use splitfa?
 if [[
-    $seq_length != false 
+    $seq_length != false
     ]];
 then
     if [[
@@ -78,10 +78,10 @@ then
         show_help=true
         >&2 echo "Mandatory arguments to run splitfa are -l and -s."
     fi
-fi   
+fi
 
 if [[
-    $step != false 
+    $step != false
     ]];
 then
     if [[
@@ -91,21 +91,21 @@ then
         show_help=true
         >&2 echo "Mandatory arguments to run splitfa are -l and -s."
     fi
-fi    
+fi
 
 prefix_pgge=pgge
 
 if [[
     $step != false ]] && [[ $seq_length != false
     ]];
-then   
+then
     splitfa=true
     prefix_pgge="$prefix_pgge"-l$seq_length-s$step
 fi
 
 if [ $show_help ];
 then
-    padding=`printf %${#0}s` # prints as many spaces as the length of $0
+    #padding=`printf %${#0}s` # prints as many spaces as the length of $0
     echo "usage:    $0 -g <input-gfa> -f <input-fasta> -r <beehave-r> [options]"
     echo
     echo "GAF-MODE: $0 -i <input-gaf> [options]"
@@ -163,7 +163,7 @@ evaluation-gaf-mode:
 general:
   threads:            $threads
 EOT
-echo -e "\nRunning pgge\n" >> $log_file
+echo -e "\nRunning pgge\n" >> "$log_file"
 
 ## START gfa_input
 if [[ $input_gaf == false ]];
@@ -187,13 +187,13 @@ if [[
     ]];
 then
     $timer -f "$fmt" samtools \
-    faidx $input_fasta \
-    2> >(tee -a $log_file)
+    faidx "$input_fasta" \
+    2> >(tee -a "$log_file")
 fi
 input_fai=$input_fasta.fai
 
 # split into samples by "." and then by "#" always taking the first hit
-cat "$input_fai" | cut -f 1 | cut -f 1 -d. | cut -f 1 -d '#' | sort | uniq | while read n; \
+cut -f 1 "$input_fai" | cut -f 1 -d. | cut -f 1 -d '#' | sort | uniq | while read n; \
 do $timer -f "$fmt" samtools faidx "$input_fasta" "$(grep "$n" "$input_fai" | cut -f 1)" > "$prefix_pgge"."$n"."$input_fasta"; \
 done 2> >(tee -a "$log_file")
 
@@ -201,7 +201,7 @@ if [[
     $splitfa != false
     ]];
 then
-    cat $input_fai| cut -f 1 | cut -f 1 -d. | cut -f 1 -d '#' | sort | uniq | while read n; \
+    cut -f 1 "$input_fai" | cut -f 1 -d. | cut -f 1 -d '#' | sort | uniq | while read n; \
     do $timer -f "$fmt" splitfa "$prefix_pgge"."$n"."$input_fasta" -l "$seq_length" -s "$step" > "$prefix_pgge"."$n"."$input_fasta".splitfa.fa; \
     done 2> >(tee -a "$log_file")
 fi
@@ -210,7 +210,7 @@ for gfa in $input_gfa
 do
     gfa_base="$(basename -- "$gfa")"
 
-    cat $input_fai| cut -f 1 | cut -f 1 -d. | cut -f 1 -d '#' | sort | uniq | while read n; \
+    cut -f 1 "$input_fai" | cut -f 1 -d. | cut -f 1 -d '#' | sort | uniq | while read n; \
     do
         graph_aligner_fasta_input=$prefix_pgge.$n.$input_fasta
         if [[
@@ -265,7 +265,7 @@ fi
 ## END gaf_input
 
 (echo sample.name cons.jump aln.id qsc uniq multi nonaln; ls "$output_dir" | grep gaf | grep pgge$ | while read f; \
-do 
+do
     echo "$(echo "$output_dir"/"$f" | cut -f 2 -d .)" "$(echo "$output_dir"/"$f" | cut -f 2 -d @ | cut -f 1 -d. )" "$(cat "$output_dir"/"$f")"; \
 done) | tr ' ' '\t' > "$prefix_pgge".tsv
 
