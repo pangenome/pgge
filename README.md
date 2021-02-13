@@ -30,7 +30,8 @@ Create a pangenome graph and its consensus graphs using _`pggb`_, storing the re
 this step assumes you have correctly installed _`pggb`_):
 
 ```
-pggb -i data/yeast/cerevisiae.pan.fa -s 50000 -p 90 -w 30000 -n 5 -t 16 -v -Y "#" -S -k 8 -B 10000000 -I 0.7 -o pggb_yeast -W -m -S
+gunzip data/yeast/cerevisiae.pan.fa.gz -k
+pggb -i data/yeast/cerevisiae.pan.fa -t 16 -s 50000 -p 90 -n 5 -Y "#" -k 8 -B 10000000 -w 30000 -I 0.7 -o pggb_yeast -W
 ```
 
 Evaluate the consensus graphs stored in the `pggb_yeast` directory:
@@ -40,7 +41,7 @@ Evaluate the consensus graphs stored in the `pggb_yeast` directory:
 Make sure that you include the opening and closing `"` in the command line, else the regex can't be resolved. For a single
 input GFA, this is not required.
 
-These commands can also be found in `examples/pgge_yeast.sh`.
+The last 2 commands can also be found in `examples/pgge_yeast.sh`.
 
 :warning: _`pgge`_ summarizes results by sample name. If you have
 ```
