@@ -11,7 +11,7 @@ input.pgge <- read.table(args[1], sep = '\t', header = T)
 aln.id <- ggplot(input.pgge, aes(x = as.factor(cons.jump), y = aln.id, label = sample.name)) +
   geom_violin() +
   geom_point() +
-  geom_text_repel(box.padding = 0.5, max.overlaps = Inf) +
+  geom_text_repel(box.padding = 0.1, max.overlaps = 20) +
   xlab("consensus jump-max") +
   theme(text = element_text(size = 16)) +
   scale_y_continuous(labels = scales::number_format(accuracy = 0.0001))
@@ -19,7 +19,7 @@ aln.id <- ggplot(input.pgge, aes(x = as.factor(cons.jump), y = aln.id, label = s
 qsc <- ggplot(input.pgge, aes(x = as.factor(cons.jump), y = qsc, label = sample.name)) +
   geom_violin() +
   geom_point() +
-  geom_text_repel(box.padding = 0.5, max.overlaps = Inf) +
+  geom_text_repel(box.padding = 0.1, max.overlaps = 20) +
   xlab("consensus jump-max") +
   theme(text = element_text(size = 16)) +
   scale_y_continuous(labels = scales::number_format(accuracy = 0.0001))
@@ -27,7 +27,7 @@ qsc <- ggplot(input.pgge, aes(x = as.factor(cons.jump), y = qsc, label = sample.
 uniq <- ggplot(input.pgge, aes(x = as.factor(cons.jump), y = uniq, label = sample.name)) +
   geom_violin() +
   geom_point() +
-  geom_text_repel(box.padding = 0.5, max.overlaps = Inf) +
+  geom_text_repel(box.padding = 0.1, max.overlaps = 20) +
   xlab("consensus jump-max") +
   theme(text = element_text(size = 16)) +
   scale_y_continuous(labels = scales::number_format(accuracy = 0.0001))
@@ -35,7 +35,7 @@ uniq <- ggplot(input.pgge, aes(x = as.factor(cons.jump), y = uniq, label = sampl
 multi <- ggplot(input.pgge, aes(x = as.factor(cons.jump), y = multi, label = sample.name)) +
   geom_violin() +
   geom_point() +
-  geom_text_repel(box.padding = 0.5, max.overlaps = Inf) +
+  geom_text_repel(box.padding = 0.1, max.overlaps = 20) +
   xlab("consensus jump-max") +
   theme(text = element_text(size = 16)) +
   scale_y_continuous(labels = scales::number_format(accuracy = 0.0001))
@@ -43,7 +43,7 @@ multi <- ggplot(input.pgge, aes(x = as.factor(cons.jump), y = multi, label = sam
 nonaln <- ggplot(input.pgge, aes(x = as.factor(cons.jump), y = nonaln, label = sample.name)) +
   geom_violin() +
   geom_point() +
-  geom_text_repel(box.padding = 0.5, max.overlaps = Inf) +
+  geom_text_repel(box.padding = 0.1, max.overlaps = 20) +
   xlab("consensus jump-max") +
   theme(text = element_text(size = 16)) +
   scale_y_continuous(labels = scales::number_format(accuracy = 0.0001))
