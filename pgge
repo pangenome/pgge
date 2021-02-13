@@ -38,7 +38,7 @@ while true ; do
         -t|--threads) threads=$2 ; shift 2 ;;
         -h|--help) show_help=true ; shift ;;
         --) shift ; break ;;
-        *) echo $2 "Internal error!" ; exit 1 ;;
+        *) echo "$2" "Internal error!" ; exit 1 ;;
     esac
 done
 
@@ -145,11 +145,11 @@ fmt="%C\n%Us user %Ss system %P cpu %es total %MKb max memory"
 timer=/usr/bin/time
 
 # write parameters to log_file:
-echo -e "Starting pgge on `date`\n" > $log_file
-echo -e "Command: $cmd\n" >> $log_file
-echo -e "PARAMETERS\n" >> $log_file
+echo -e "Starting pgge on `date`\n" > "$log_file"
+echo -e "Command: $cmd\n" >> "$log_file"
+echo -e "PARAMETERS\n" >> "$log_file"
 
-cat <<EOT | tee -a $log_file $param_file >/dev/null
+cat <<EOT | tee -a "$log_file" "$param_file" >/dev/null
 evaluation:
   input-gfa:          $input_gfa
   input-fasta:        $input_fasta
@@ -193,22 +193,22 @@ fi
 input_fai=$input_fasta.fai
 
 # split into samples by "." and then by "#" always taking the first hit
-cat $input_fai| cut -f 1 | cut -f 1 -d. | cut -f 1 -d '#' | sort | uniq | while read n; \
-do $timer -f "$fmt" samtools faidx $input_fasta $(grep $n $input_fai | cut -f 1) > $prefix_pgge.$n.$input_fasta; \
-done 2> >(tee -a $log_file)
+cat "$input_fai" | cut -f 1 | cut -f 1 -d. | cut -f 1 -d '#' | sort | uniq | while read n; \
+do $timer -f "$fmt" samtools faidx "$input_fasta" "$(grep "$n" "$input_fai" | cut -f 1)" > "$prefix_pgge"."$n"."$input_fasta"; \
+done 2> >(tee -a "$log_file")
 
 if [[
     $splitfa != false
     ]];
 then
     cat $input_fai| cut -f 1 | cut -f 1 -d. | cut -f 1 -d '#' | sort | uniq | while read n; \
-    do $timer -f "$fmt" splitfa $prefix_pgge.$n.$input_fasta -l $seq_length -s $step > $prefix_pgge.$n.$input_fasta.splitfa.fa; \
-    done 2> >(tee -a $log_file)
+    do $timer -f "$fmt" splitfa "$prefix_pgge"."$n"."$input_fasta" -l "$seq_length" -s "$step" > "$prefix_pgge"."$n"."$input_fasta".splitfa.fa; \
+    done 2> >(tee -a "$log_file")
 fi
 
 for gfa in $input_gfa
 do
-    gfa_base="$(basename -- $gfa)"
+    gfa_base="$(basename -- "$gfa")"
 
     cat $input_fai| cut -f 1 | cut -f 1 -d. | cut -f 1 -d '#' | sort | uniq | while read n; \
     do
@@ -220,20 +220,20 @@ do
             graph_aligner_fasta_input=$prefix_pgge.$n.$input_fasta.splitfa.fa
         fi
         $timer -f "$fmt" GraphAligner \
-            -g $gfa \
-            -f $graph_aligner_fasta_input \
-            -a $prefix_pgge.$n.$gfa_base.gaf \
+            -g "$gfa" \
+            -f "$graph_aligner_fasta_input" \
+            -a "$prefix_pgge"."$n"."$gfa_base".gaf \
             -x vg \
-            -t $threads \
-            2> >(tee -a $log_file)
-        ($timer -f "$fmt" cut -f 2,3,4,16 $prefix_pgge.$n.$gfa_base.gaf \
+            -t "$threads" \
+            2> >(tee -a "$log_file")
+        ($timer -f "$fmt" cut -f 2,3,4,16 "$prefix_pgge"."$n"."$gfa_base".gaf \
             | sed s/id:f:// \
             | awk '{ len=$3-$2; tlen+=len; sum+=$4*len; } END { print sum / tlen }' \
             | tr "\n" "\t" \
-            1> $prefix_pgge.$n.$gfa_base.gaf.pgge) 2> >(tee -a $log_file) 
+            1> "$prefix_pgge"."$n"."$gfa_base".gaf.pgge) 2> >(tee -a "$log_file")
         ($timer -f "$fmt" peanut \
-            -g $prefix_pgge.$n.$gfa_base.gaf \
-            1>> $prefix_pgge.$n.$gfa_base.gaf.pgge) 2> >(tee -a $log_file);
+            -g "$prefix_pgge"."$n"."$gfa_base".gaf \
+            1>> "$prefix_pgge"."$n"."$gfa_base".gaf.pgge) 2> >(tee -a "$log_file");
     done
 done
 
@@ -249,27 +249,27 @@ then
     exit
 fi
 
-echo $input_gaf
-input_gaf_base="$(basename -- $input_gaf)"
+echo "$input_gaf"
+input_gaf_base="$(basename -- "$input_gaf")"
 
-($timer -f "$fmt" cut -f 2,3,4,16 $input_gaf \
+($timer -f "$fmt" cut -f 2,3,4,16 "$input_gaf" \
     | sed s/id:f:// \
     | awk '{ len=$3-$2; tlen+=len; sum+=$4*len; } END { print sum / tlen }' \
     | tr "\n" "\t" \
-    1> $prefix_pgge.$input_gaf_base.pgge) 2> >(tee -a $log_file) 
+    1> "$prefix_pgge"."$input_gaf_base".pgge) 2> >(tee -a "$log_file")
 ($timer -f "$fmt" peanut \
-    -g $input_gaf \
-    1>> $prefix_pgge.$input_gaf_base.pgge) 2> >(tee -a $log_file);
+    -g "$input_gaf" \
+    1>> "$prefix_pgge"."$input_gaf_base".pgge) 2> >(tee -a "$log_file");
 
 fi
 ## END gaf_input
 
-(echo sample.name cons.jump aln.id qsc uniq multi nonaln; ls $output_dir | grep gaf | grep pgge$ | while read f; \
+(echo sample.name cons.jump aln.id qsc uniq multi nonaln; ls "$output_dir" | grep gaf | grep pgge$ | while read f; \
 do 
-    echo $(echo $output_dir/$f | cut -f 2 -d .) $(echo $output_dir/$f | cut -f 2 -d @ | cut -f 1 -d. ) $(cat $output_dir/$f); \
-done) | tr ' ' '\t' > $prefix_pgge.tsv
+    echo "$(echo "$output_dir"/"$f" | cut -f 2 -d .)" "$(echo "$output_dir"/"$f" | cut -f 2 -d @ | cut -f 1 -d. )" "$(cat "$output_dir"/"$f")"; \
+done) | tr ' ' '\t' > "$prefix_pgge".tsv
 
 $timer -f "$fmt" Rscript \
-    $beehave_R $prefix_pgge.tsv \
-    $prefix_pgge.tsv.png \
-    2> >(tee -a $log_file)
+    "$beehave_R" "$prefix_pgge".tsv \
+    "$prefix_pgge".tsv.png \
+    2> >(tee -a "$log_file")
