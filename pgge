@@ -194,7 +194,7 @@ input_fai=$input_fasta.fai
 
 # split into samples by "." and then by "#" always taking the first hit
 cut -f 1 "$input_fai" | cut -f 1 -d. | cut -f 1 -d '#' | sort | uniq | while read n; \
-do $timer -f "$fmt" samtools faidx "$input_fasta" "$(grep "$n" "$input_fai" | cut -f 1)" > "$prefix_pgge"."$n"."$input_fasta"; \
+do $timer -f "$fmt" samtools faidx "$input_fasta" $(grep "$n" "$input_fai" | cut -f 1) > "$prefix_pgge"."$n"."$input_fasta"; \
 done 2> >(tee -a "$log_file")
 
 if [[
@@ -228,7 +228,7 @@ do
             2> >(tee -a "$log_file")
         ($timer -f "$fmt" cut -f 2,3,4,16 "$prefix_pgge"."$n"."$gfa_base".gaf \
             | sed s/id:f:// \
-            | awk '{ len=$3-$2; tlen+=len; sum+=$4*len; } END { print sum / tlen }' \
+            | LC_NUMERIC=de_DE.UTF-8 awk '{ len=$3-$2; tlen+=len; sum+=$4*len; } END { print sum / tlen }' \
             | tr "\n" "\t" \
             1> "$prefix_pgge"."$n"."$gfa_base".gaf.pgge) 2> >(tee -a "$log_file")
         ($timer -f "$fmt" peanut \
@@ -254,7 +254,7 @@ input_gaf_base="$(basename -- "$input_gaf")"
 
 ($timer -f "$fmt" cut -f 2,3,4,16 "$input_gaf" \
     | sed s/id:f:// \
-    | awk '{ len=$3-$2; tlen+=len; sum+=$4*len; } END { print sum / tlen }' \
+    | LC_NUMERIC=de_DE.UTF-8 awk '{ len=$3-$2; tlen+=len; sum+=$4*len; } END { print sum / tlen }' \
     | tr "\n" "\t" \
     1> "$prefix_pgge"."$input_gaf_base".pgge) 2> >(tee -a "$log_file")
 ($timer -f "$fmt" peanut \
