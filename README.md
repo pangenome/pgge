@@ -19,68 +19,83 @@ It has five phases:
 
 ## general usage
 
-Create our pangenome graph and consensus graphs using _`pggb`_:
+Clone this repository:
 
 ```
-pggb -i cerevisiae.pan.fa -s 50000 -p 90 -w 30000 -n 5 -t 16 -v -Y "#" -S -k 8 -B 10000000 -I 0.7 -o pggb -W -m -S
+git clone --recursive https://github.com/pangenome/pggb
+cd pgge
 ```
-Evaluate the consensus graphs.
-```
-time pgge -g "pggb_yeast/*consensus*.gfa" -f cerevisiae.pan.fa  -t 16 -r ~/git/pgge/scripts/beehave.R  -l 100000 -s 50000 -o pgge_yeast
-```
-Make sure that you include the opening and closing `"` in the command line, else the regex can't be resolved. For a single input GFA, this is not required.
 
-These commands can also be found in `examples/pgge_yeast.sh`.
+Create a pangenome graph and its consensus graphs using _`pggb`_, storing the results in the `pggb_yeast` directory (:warning:
+this step assumes you have correctly installed _`pggb`_):
 
-:warning: _`pgge`_ is summarizing results by sample name. If you have
+```
+gunzip data/yeast/cerevisiae.pan.fa.gz -k
+pggb -i data/yeast/cerevisiae.pan.fa -t 16 -s 50000 -p 90 -n 5 -Y "#" -k 8 -B 10000000 -w 30000 -I 0.7 -o pggb_yeast -W
+```
+
+Evaluate the consensus graphs stored in the `pggb_yeast` directory:
+```
+./pgge -g "pggb_yeast/*consensus*.gfa" -f data/yeast/cerevisiae.pan.fa  -t 16 -r scripts/beehave.R  -l 100000 -s 50000 -o pgge_yeast
+```
+Make sure that you include the opening and closing `"` in the command line, else the regex can't be resolved. For a single
+input GFA, this is not required.
+
+:warning: _`pgge`_ summarizes results by sample name. If you have
 ```
 S288C.chrI
 S288C.chrII
 S288C.chrIII
 ```
-in your given FASTA file, the results will only contain one line of metrics. In this case for `S288C`. This is useful if you have contig sequences in your FASTA and want to summarize by sample name. _`pgge`_ always splits by `.` and takes the first entry in the resulting split as sample name. 
+in your given FASTA file, the results will only contain one line of metrics. In this case for `S288C`. This is useful if
+you have contig sequences in your FASTA and want to summarize by sample name. _`pgge`_ always splits by `.` and takes the
+first entry in the resulting split as sample name. 
 
-:warning: In addition, _`pgge`_ assumes that there is *@NUMBER* in each name of the input GAFs. This *NUMBER* is extracted later and appears in the table and output plot as *cons.jump*, because _`pgge`_ was designed for processing the results of _`pggb`_. If you are evaluating your own data not originating from _`pggb`_ it is recommended to add a different *@NUMBER* for each of your input GAFs in order to better understand the resulting output.
+:warning: In addition, _`pgge`_ assumes that there is *@NUMBER* in each name of the input GAFs. This *NUMBER* is extracted
+later and appears in the table and output plot as *cons.jump*, because _`pgge`_ was designed for processing the results
+of _`pggb`_. If you are evaluating your own data not originating from _`pggb`_ it is recommended to add a different *@NUMBER*
+for each of your input GAFs in order to better understand the resulting output.
 
 ### output
 
 The output is written to `pgge_yeast/pgge-l100000-s50000.tsv` in a tab-delimited format:
 ```
-cat pgge_yeast/pgge-l100000-s50000.tsv
+cat pgge_yeast/pgge-l100000-s50000.tsv | column -t
 ```
 ```
-sample.name	cons.jump	aln.id	qsc	uniq	multi	nonaln
-DBVPG6044	10000:y	0.994218	0.9899744104803494	0.9896451965065503	0.00032921397379912664	0.010025589519650656
-DBVPG6044	1000:y	0.994263	0.9903787772925764	0.9900709606986899	0.0003078165938864629	0.00962122270742358
-DBVPG6044	100:y	0.994298	0.9912931004366812	0.991070305676856	0.0002227947598253275	0.008706899563318778
-DBVPG6044	10:y	0.994735	0.9921786026200874	0.9920539301310044	0.00012467248908296942	0.007821397379912665
-DBVPG6765	10000:y	0.992841	0.985657729257642	0.9853784716157206	0.00027925764192139737	0.014342270742358079
-DBVPG6765	1000:y	0.992856	0.986948384279476	0.98662	0.00032838427947598254	0.013051615720524018
-DBVPG6765	100:y	0.992967	0.9884108733624454	0.9881827510917031	0.00022812227074235807	0.011589126637554585
-DBVPG6765	10:y	0.993538	0.9914508733624454	0.9912349781659389	0.00021589519650655023	0.008549126637554584
-S288C	10000:y	0.993716	0.9857024255319149	0.9854575319148936	0.0002448936170212766	0.014297574468085106
-S288C	1000:y	0.9937	0.9865472765957447	0.9863214042553191	0.0002258723404255319	0.01345272340425532
-S288C	100:y	0.993877	0.9889516170212765	0.9888419574468085	0.00010965957446808511	0.011048382978723405
-S288C	10:y	0.994363	0.9917501702127659	0.9916815319148936	0.00006863829787234043	0.008249829787234042
-SK1	10000:y	0.994397	0.9905497835497835	0.990106406926407	0.00044337662337662337	0.00945021645021645
-SK1	1000:y	0.994448	0.9896461038961039	0.9892491341991342	0.00039696969696969696	0.010353896103896103
-SK1	100:y	0.994541	0.991494329004329	0.9911982683982684	0.00029606060606060606	0.008505670995670995
-SK1	10:y	0.995039	0.9924314285714285	0.9922540692640692	0.00017735930735930737	0.007568571428571429
-UWOPS034614	10000:y	0.993025	0.9868850877192983	0.9864196052631579	0.0004654824561403509	0.013114912280701755
-UWOPS034614	1000:y	0.993003	0.9853789035087719	0.9849094298245614	0.0004694736842105263	0.01462109649122807
-UWOPS034614	100:y	0.993264	0.9895118421052631	0.9892686403508771	0.0002432017543859649	0.010488157894736842
-UWOPS034614	10:y	0.993867	0.9913359210526316	0.9912328070175439	0.0001031140350877193	0.00866407894736842
-Y12	10000:y	0.994754	0.991111135371179	0.9906802620087336	0.00043087336244541485	0.00888886462882096
-Y12	1000:y	0.994754	0.991854192139738	0.9913742794759826	0.0004799126637554585	0.008145807860262009
-Y12	100:y	0.99493	0.9901456331877729	0.989918209606987	0.0002274235807860262	0.009854366812227074
-Y12	10:y	0.995162	0.9932890829694323	0.9930175109170306	0.0002715720524017467	0.006710917030567686
-YPS128	10000:y	0.995636	0.989447903930131	0.9893367248908297	0.00011117903930131005	0.010552096069868996
-YPS128	1000:y	0.995584	0.9897622707423581	0.9896544978165939	0.00010777292576419214	0.010237729257641921
-YPS128	100:y	0.995773	0.9937249781659389	0.9936575982532752	0.00006737991266375546	0.006275021834061136
-YPS128	10:y	0.995965	0.9955779912663756	0.995537248908297	0.00004074235807860262	0.004422008733624454
+sample.name  cons.jump  aln.id    qsc                 uniq                multi                    nonaln
+DBVPG6044    10000:y    0.994253  0.9882487336244542  0.9878719650655022  0.00037676855895196504   0.011751266375545851
+DBVPG6044    1000:y     0.99429   0.9905872052401746  0.9902261572052402  0.00036104803493449783   0.009412794759825328
+DBVPG6044    100:y      0.994346  0.9920169432314411  0.9917783406113537  0.00023860262008733625   0.007983056768558951
+DBVPG6044    10:y       0.994804  0.9931444978165939  0.9930238427947599  0.00012065502183406113   0.0068555021834061135
+DBVPG6765    10000:y    0.992895  0.984453537117904   0.9841169868995633  0.00033655021834061135   0.01554646288209607
+DBVPG6765    1000:y     0.992816  0.9851402620087336  0.9847942358078603  0.00034602620087336247   0.014859737991266376
+DBVPG6765    100:y      0.992857  0.9850624454148471  0.9848960262008734  0.00016641921397379914   0.014937554585152838
+DBVPG6765    10:y       0.993555  0.9918473362445415  0.9916482969432314  0.00019903930131004368   0.008152663755458514
+S288C        10000:y    0.993815  0.9840108085106383  0.9836786808510638  0.0003321276595744681    0.015989191489361704
+S288C        1000:y     0.993819  0.9856704255319149  0.9854043829787235  0.0002660425531914894    0.014329574468085107
+S288C        100:y      0.994008  0.9880367234042553  0.9878560425531915  0.0001806808510638298    0.011963276595744681
+S288C        10:y       0.994503  0.9923237872340426  0.9922378723404255  0.00008591489361702127   0.007676212765957447
+SK1          10000:y    0.994393  0.98889             0.9882832467532467  0.0006067532467532468    0.01111
+SK1          1000:y     0.994355  0.9909501731601732  0.9903794805194805  0.0005706926406926407    0.00904982683982684
+SK1          100:y      0.994531  0.9920734632034632  0.9916370995670996  0.00043636363636363637   0.007926536796536796
+SK1          10:y       0.99508   0.9932187878787879  0.9930288311688311  0.00018995670995670995   0.006781212121212121
+UWOPS034614  10000:y    0.993074  0.9854122807017544  0.9849935964912281  0.0004186842105263158    0.014587719298245615
+UWOPS034614  1000:y     0.993131  0.9833553070175438  0.9829300438596491  0.00042526315789473683   0.01664469298245614
+UWOPS034614  100:y      0.99331   0.9884982894736842  0.9883386842105263  0.00015960526315789473   0.01150171052631579
+UWOPS034614  10:y       0.993955  0.9915775           0.991506403508772   0.00007109649122807018   0.0084225
+Y12          10000:y    0.994867  0.9878221834061135  0.9873637554585153  0.00045842794759825325   0.012177816593886464
+Y12          1000:y     0.994863  0.9892637554585153  0.9888601746724891  0.0004035807860262009    0.010736244541484715
+Y12          100:y      0.994997  0.9919159388646288  0.9917003056768559  0.00021563318777292578   0.00808406113537118
+Y12          10:y       0.995301  0.9941565065502184  0.9939880786026201  0.00016842794759825327   0.00584349344978166
+YPS128       10000:y    0.995545  0.9904155895196507  0.9902230567685589  0.00019253275109170305   0.009584410480349345
+YPS128       1000:y     0.99559   0.9909312663755458  0.9907755458515284  0.00015572052401746726   0.009068733624454149
+YPS128       100:y      0.995676  0.993891615720524   0.9938559825327511  0.000035633187772925764  0.006108384279475983
+YPS128       10:y       0.99591   0.995602576419214   0.995569519650655   0.000033056768558951964  0.004397423580786026
 ```
 
-The first number is the `aln.id` derived from the alignment identity GAF field of _`GraphAligner`_. All other metrics can be found in the [metrics section](https://github.com/pangenome/rs-peanut#metrics) of _`peanut`_.
+The first number is the `aln.id` derived from the alignment identity GAF field of _`GraphAligner`_. All other metrics can
+be found in the [metrics section](https://github.com/pangenome/rs-peanut#metrics) of _`peanut`_.
 
 _`pgge`_ also generates a visualization of the results `pgge_yeast/pgge-l100000-s50000.tsv.png`:
 ![pgge_yeast.sh](examples/pgge-l100000-s50000.tsv.png)
@@ -110,7 +125,7 @@ _`pgge`_ also generates a visualization of the results `pgge_yeast/pgge-l100000-
 - [x] Add output-folder option.
 - [ ] Add possibility to input several GAF files. Make sure the user can input a list of samples for the GAFs.
 - [ ] The user should be able to select options for GraphAligner.
-- [ ] Add a toolchain that compares the query aligments with the exact nodes they aligned to in the graph.
+- [ ] Add a toolchain that compares the query alignments with the exact nodes they aligned to in the graph.
 - [ ] Add Dockerfile.
 - [ ] Add a CI building the Dockerfile and emitting evaluation metrics for all tools using `HLA-Zoo` data.
 - [ ] Add usage examples for _`minigraph`_, _`cactus`_, and _`SibeliaZ`_.
