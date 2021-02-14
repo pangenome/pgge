@@ -48,6 +48,6 @@ nonaln <- ggplot(input.pgge, aes(x = as.factor(cons.jump), y = nonaln, label = s
   theme(text = element_text(size = 16)) +
   scale_y_continuous(labels = scales::number_format(accuracy = 0.0001))
 
-png(args[2], width = 1700, height = 500, pointsize = 25)
+png(args[2], width = 2000, height = 500, pointsize = 25)
 g <- grid.arrange(aln.id, qsc, uniq, multi, nonaln, nrow = 1)
 dev.off()

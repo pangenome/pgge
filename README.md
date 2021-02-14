@@ -36,12 +36,10 @@ pggb -i data/yeast/cerevisiae.pan.fa -t 16 -s 50000 -p 90 -n 5 -Y "#" -k 8 -B 10
 
 Evaluate the consensus graphs stored in the `pggb_yeast` directory:
 ```
-./pgge -g "pggb_yeast/*consensus*.gfa" -f data/yeast/cerevisiae.pan.fa  -t 16 -r ~/git/pgge/scripts/beehave.R  -l 100000 -s 50000 -o pgge_yeast
+./pgge -g "pggb_yeast/*consensus*.gfa" -f data/yeast/cerevisiae.pan.fa  -t 16 -r scripts/beehave.R  -l 100000 -s 50000 -o pgge_yeast
 ```
 Make sure that you include the opening and closing `"` in the command line, else the regex can't be resolved. For a single
 input GFA, this is not required.
-
-The last 2 commands can also be found in `examples/pgge_yeast.sh`.
 
 :warning: _`pgge`_ summarizes results by sample name. If you have
 ```
