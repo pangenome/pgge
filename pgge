@@ -113,7 +113,7 @@ then
     echo "options:"
     echo "   [evaluation]"
     echo "    -g, --input-gfa FILE        input GFA file"
-    echo "    -f, --input-fasta FILE      input FASTA file"
+    echo "    -f, --input-fasta FILE      input FASTA file (uncompressed or gzipped)"
     echo "    -o, --output-dir FILE       output directory"
     echo "    -r, --beehave-r PATH        path to beehave.R"
     echo "   [splitfa]"
@@ -186,6 +186,11 @@ if [[
     ! -f $input_fasta.fai
     ]];
 then
+    if (file "$input_fasta" | grep -q 'gzip compressed data' ) ; then
+      gunzip -k -f "$input_fasta"
+      input_fasta="$(echo "$input_fasta" | sed -e 's/\.[^./]*$//')"
+    fi
+
     $timer -f "$fmt" samtools \
     faidx "$input_fasta" \
     2> >(tee -a "$log_file")
