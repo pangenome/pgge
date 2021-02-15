@@ -113,7 +113,7 @@ then
     echo "options:"
     echo "   [evaluation]"
     echo "    -g, --input-gfa FILE        input GFA file"
-    echo "    -f, --input-fasta FILE      input FASTA file"
+    echo "    -f, --input-fasta FILE      input FASTA file (uncompressed or gzipped)"
     echo "    -o, --output-dir FILE       output directory"
     echo "    -r, --beehave-r PATH        path to beehave.R"
     echo "   [splitfa]"
@@ -180,6 +180,17 @@ do
         exit
     fi
 done
+
+# Manage uncompressed or gzip compressed FASTA files
+if (file "$input_fasta" | grep -q 'gzip compressed data' ) ; then
+  input_fasta_uncompressed="$(echo "$input_fasta" | sed -e 's/\.[^./]*$//')"
+  if [ ! -f "$input_fasta_uncompressed" ];
+  then
+    gunzip -k "$input_fasta" -c > "$input_fasta_uncompressed"
+  fi
+
+  input_fasta="$input_fasta_uncompressed"
+fi
 
 # do we already have a FASTA index for the input_fasta?
 if [[
