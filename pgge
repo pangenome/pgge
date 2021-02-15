@@ -181,16 +181,22 @@ do
     fi
 done
 
+# Manage uncompressed or gzip compressed FASTA files
+if (file "$input_fasta" | grep -q 'gzip compressed data' ) ; then
+  input_fasta_uncompressed="$(echo "$input_fasta" | sed -e 's/\.[^./]*$//')"
+  if [ ! -f "$input_fasta_uncompressed" ];
+  then
+    gunzip -k "$input_fasta" -c > "$input_fasta_uncompressed"
+  fi
+
+  input_fasta="$input_fasta_uncompressed"
+fi
+
 # do we already have a FASTA index for the input_fasta?
 if [[
     ! -f $input_fasta.fai
     ]];
 then
-    if (file "$input_fasta" | grep -q 'gzip compressed data' ) ; then
-      gunzip -k -f "$input_fasta"
-      input_fasta="$(echo "$input_fasta" | sed -e 's/\.[^./]*$//')"
-    fi
-
     $timer -f "$fmt" samtools \
     faidx "$input_fasta" \
     2> >(tee -a "$log_file")
