@@ -6,6 +6,7 @@ set -eo pipefail
 input_gfa=false
 input_fasta=false
 input_gaf=false
+input_graph_names=false
 output_dir="."
 splitfa=false
 seq_length=false
@@ -14,16 +15,19 @@ beehave_R=false
 peanut_bed=false
 threads=1
 
+num_gfas=0
+num_input_graph_names=0
+
 if [ $# -eq 0 ];
 then
     show_help=true
-fi
+fi 
 
 ## TODO add options for GraphAligner
 
 # read the options
 cmd=$0" "$@
-TEMP=`getopt -o g:f:i:r:o:l:s:t:hb --long input-gfa:,input-fasta:,input-gaf:,beehave-r:,output-dir:,seq-length:,step:,threads:,help,peanut-bed -n 'pgge' -- "$@"`
+TEMP=`getopt -o g:f:i:n:r:o:l:s:t:hb --long input-gfa:,input-fasta:,input-gaf:,input-graph-names:,beehave-r:,output-dir:,seq-length:,step:,threads:,help,peanut-bed -n 'pgge' -- "$@"`
 eval set -- "$TEMP"
 
 # extract options and their arguments into variables.
@@ -32,6 +36,7 @@ while true ; do
         -g|--input-gfa) input_gfa=$2 ; shift 2 ;;
         -f|--input-fasta) input_fasta=$2 ; shift 2 ;;
         -i|--input-gaf) input_gaf=$2 ; shift 2 ;;
+        -n|--input-graph-names) input_graph_names=$2 ; shift 2 ;;
         -r|--beehave-r) beehave_R=$2 ; shift 2 ;;
         -o|--output-dir) output_dir=$2 ; shift 2 ;;
         -l|--seq-length) seq_length=$2 ; shift 2 ;;
@@ -118,7 +123,8 @@ then
     echo "    -f, --input-fasta FILE      input FASTA file (uncompressed or gzipped)"
     echo "    -o, --output-dir FILE       output directory"
     echo "    -r, --beehave-r PATH        path to beehave.R"
-    echo "    -b, --peanut-bed PATH       output BED file"    
+    echo "    -b, --peanut-bed PATH       output BED file"  
+    echo "    -n, --input-graph-names TSV input graph name file: first row is the name of the original input file, second row is the display name in the PNG"    
     echo "   [splitfa]"
     echo "    -l, --seq-length N          length of the splits"
     echo "    -s, --step N                step size between splits"
@@ -159,6 +165,7 @@ evaluation:
   output-dir:         $output_dir
   beehave-r:          $beehave_R
   peanut-bed:         $peanut_bed
+  input-graph-names:  $input_graph_names
 splitfa:
   seq-length:         $seq_length
   step:               $step
@@ -168,6 +175,18 @@ general:
   threads:            $threads
 EOT
 echo -e "\nRunning pgge\n" >> "$log_file"
+
+# does the given input-graph-names exist?
+if [[ $input_graph_names != false ]];
+then
+    if [[
+        ! -f $input_graph_names
+    ]]
+    then
+        >&2 echo "'$input_graph_names' graph names file does not exist! Please correct and re-run pgge."
+        exit
+    fi
+fi
 
 ## START gfa_input
 if [[ $input_gaf == false ]];
@@ -180,10 +199,25 @@ do
         ! -f $gfa
         ]];
     then
-        >&2 echo "$gfa GFA does not exist! Please correct and re-run pgge."
+        >&2 echo "'$gfa' GFA does not exist! Please correct and re-run pgge."
         exit
+    else 
+        ((num_gfas=num_gfas+1))
     fi
 done
+
+# TODO find out if #lines == #GFAs
+# echo $num_gfas
+#echo $(wc -l $input_graph_names | cut -f 1 -d " ")
+if [[ $input_graph_names != false ]];
+then
+    num_input_graph_names=$(wc -l $input_graph_names | cut -f 1 -d " ")
+    if [[ $num_gfas != $num_input_graph_names ]];
+    then
+        >&2 echo "Number of given graph names in '$input_graph_names' does not match given number of GFAs. Please correct and re-run pgge."
+            exit
+    fi
+fi
 
 # Manage uncompressed or gzip compressed FASTA files
 if (file "$input_fasta" | grep -q 'gzip compressed data' ) ; then
@@ -272,7 +306,7 @@ if [[
     ! -f $input_gaf
     ]];
 then
-    >&2 echo "$input_gaf GAF does not exist! Please correct and re-run pgge."
+    >&2 echo "'$input_gaf' GAF does not exist! Please correct and re-run pgge."
     exit
 fi
 
@@ -291,12 +325,24 @@ input_gaf_base="$(basename -- "$input_gaf")"
 fi
 ## END gaf_input
 
-(echo sample.name cons.jump aln.id qsc uniq multi nonaln; ls "$output_dir" | grep gaf | grep pgge$ | while read f; \
-do
-    echo "$(echo "$output_dir"/"$f" | cut -f 2 -d .)" "$(echo "$output_dir"/"$f" | cut -f 2 -d @ | cut -f 1 -d. )" "$(cat "$output_dir"/"$f")"; \
-done) | tr ' ' '\t' > "$prefix_pgge".tsv
-
-$timer -f "$fmt" Rscript \
-    "$beehave_R" "$prefix_pgge".tsv \
-    "$prefix_pgge".tsv.png \
-    2> >(tee -a "$log_file")
+if [[ $input_graph_names == false ]];
+then
+    (echo sample.name cons.jump aln.id qsc uniq multi nonaln; ls "$output_dir" | grep gaf | grep pgge$ | while read f; \
+    do
+    echo "$(echo "$output_dir"/"$f" | cut -f 2 -d .)" "$(echo "$output_dir"/"$f" | cut -f 2 -d @ | cut -f 1 -d.)" "$(cat "$output_dir"/"$f")"; \
+    done) | tr ' ' '\t' > "$prefix_pgge".tsv
+    $timer -f "$fmt" Rscript \
+        "$beehave_R" "$prefix_pgge".tsv \
+        "$prefix_pgge".tsv.png \
+        2> >(tee -a "$log_file")
+else 
+    (echo sample.name cons.jump aln.id qsc uniq multi nonaln; ls "$output_dir" | grep gaf | grep pgge$ | while read f; \
+    do
+    echo "$(echo "$output_dir"/"$f" | cut -f 2 -d .)" "$(basename $(echo "$output_dir"/"$f"))" "$(cat "$output_dir"/"$f")"; \
+    done) | tr ' ' '\t' > "$prefix_pgge".tsv
+    $timer -f "$fmt" Rscript \
+        "$beehave_R" "$prefix_pgge".tsv \
+        "$prefix_pgge".tsv.png \
+        "$input_graph_names" \
+        2> >(tee -a "$log_file")
+fi

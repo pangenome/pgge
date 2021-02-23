@@ -53,10 +53,24 @@ in your given FASTA file, the results will only contain one line of metrics. In 
 you have contig sequences in your FASTA and want to summarize by sample name. _`pgge`_ always splits by `.` and takes the
 first entry in the resulting split as sample name. 
 
-:warning: In addition, _`pgge`_ assumes that there is *@NUMBER* in each name of the input GAFs. This *NUMBER* is extracted
-later and appears in the table and output plot as *cons.jump*, because _`pgge`_ was designed for processing the results
-of _`pggb`_. If you are evaluating your own data not originating from _`pggb`_ it is recommended to add a different *@NUMBER*
-for each of your input GAFs in order to better understand the resulting output.
+:warning: _`pgge`_ was designed for processing the results
+of _`pggb`_. If you are evaluating your own data not originating from _`pggb`_ it is recommended to set the `-n/--input-graph-names` parameter to ensure the final PNG is labeled correctly. This parameters requires a TSV with 2 rows: 
+
+1. The name of the original input graph.
+2. The name to display in the PNG.
+
+In the following an example for the yeast data set:
+
+```
+cerevisiae.pan.fa.pggb-W-s50000-l150000-p90-n5-a0-K16-k8.seqwish-w30000-j5000-e5000-I0.7.smooth.consensus@10000::y:0:1000000.gfa	10k::y:0:1000k
+cerevisiae.pan.fa.pggb-W-s50000-l150000-p90-n5-a0-K16-k8.seqwish-w30000-j5000-e5000-I0.7.smooth.consensus@1000::y:0:1000000.gfa	1k::y:0:1000k
+cerevisiae.pan.fa.pggb-W-s50000-l150000-p90-n5-a0-K16-k8.seqwish-w30000-j5000-e5000-I0.7.smooth.consensus@100::y:0:1000000.gfa	0.1k::y:0:1000k
+cerevisiae.pan.fa.pggb-W-s50000-l150000-p90-n5-a0-K16-k8.seqwish-w30000-j5000-e5000-I0.7.smooth.consensus@10::y:0:1000000.gfa	0.01k::y:0:1000k
+cerevisiae.pan.fa.pggb-W-s50000-p90-n5-a0-K16-k8.seqwish-w30000-j5000-e5000-I0.7.smooth.consensus@10000:y.gfa	10k:y
+cerevisiae.pan.fa.pggb-W-s50000-p90-n5-a0-K16-k8.seqwish-w30000-j5000-e5000-I0.7.smooth.consensus@1000:y.gfa	1k:y
+cerevisiae.pan.fa.pggb-W-s50000-p90-n5-a0-K16-k8.seqwish-w30000-j5000-e5000-I0.7.smooth.consensus@100:y.gfa	0.1k:y
+cerevisiae.pan.fa.pggb-W-s50000-p90-n5-a0-K16-k8.seqwish-w30000-j5000-e5000-I0.7.smooth.consensus@10:y.gfa	0.01k:y
+```
 
 ### output
 
