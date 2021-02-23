@@ -26,8 +26,9 @@ git clone --recursive https://github.com/pangenome/pggb
 cd pgge
 ```
 
-Create a pangenome graph and its consensus graphs using _`pggb`_, storing the results in the `pggb_yeast` directory (:warning:
-this step assumes you have correctly installed _`pggb`_):
+Create a pangenome graph and its consensus graphs using _`pggb`_, storing the results in the `pggb_yeast` directory.
+
+:warning: This step assumes you have correctly installed _`pggb`_:
 
 ```
 pggb -i data/yeast/cerevisiae.pan.fa.gz -t 16 -s 50000 -p 90 -n 5 -Y "#" -k 8 -B 10000000 -w 30000 -I 0.7 -o pggb_yeast -W
@@ -39,6 +40,8 @@ Evaluate the consensus graphs stored in the `pggb_yeast` directory:
 ```
 Make sure that you include the opening and closing `"` in the command line, else the regex can't be resolved. For a single
 input GFA, this is not required.
+
+Optionally, you can set `-b` to write the unmapped regions to [BED](https://m.ensembl.org/info/website/upload/bed.html).
 
 :warning: _`pgge`_ summarizes results by sample name. If you have
 ```

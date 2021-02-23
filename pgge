@@ -11,6 +11,7 @@ splitfa=false
 seq_length=false
 step=false
 beehave_R=false
+peanut_bed=false
 threads=1
 
 if [ $# -eq 0 ];
@@ -22,7 +23,7 @@ fi
 
 # read the options
 cmd=$0" "$@
-TEMP=`getopt -o g:f:i:r:o:l:s:t:h --long input-gfa:,input-fasta:,input-gaf:,beehave-r:,output-dir:,seq_length:,step:,threads:,help -n 'pggb' -- "$@"`
+TEMP=`getopt -o g:f:i:r:o:l:s:t:hb --long input-gfa:,input-fasta:,input-gaf:,beehave-r:,output-dir:,seq-length:,step:,threads:,help,peanut-bed -n 'pgge' -- "$@"`
 eval set -- "$TEMP"
 
 # extract options and their arguments into variables.
@@ -35,6 +36,7 @@ while true ; do
         -o|--output-dir) output_dir=$2 ; shift 2 ;;
         -l|--seq-length) seq_length=$2 ; shift 2 ;;
         -s|--step) step=$2 ; shift 2 ;;
+        -b|--peanut-bed) peanut_bed=true ; shift ;;
         -t|--threads) threads=$2 ; shift 2 ;;
         -h|--help) show_help=true ; shift ;;
         --) shift ; break ;;
@@ -116,6 +118,7 @@ then
     echo "    -f, --input-fasta FILE      input FASTA file (uncompressed or gzipped)"
     echo "    -o, --output-dir FILE       output directory"
     echo "    -r, --beehave-r PATH        path to beehave.R"
+    echo "    -b, --peanut-bed PATH       output BED file"    
     echo "   [splitfa]"
     echo "    -l, --seq-length N          length of the splits"
     echo "    -s, --step N                step size between splits"
@@ -155,6 +158,7 @@ evaluation:
   input-fasta:        $input_fasta
   output-dir:         $output_dir
   beehave-r:          $beehave_R
+  peanut-bed:         $peanut_bed
 splitfa:
   seq-length:         $seq_length
   step:               $step
@@ -244,9 +248,19 @@ do
             | LC_NUMERIC=de_DE.UTF-8 awk '{ len=$3-$2; tlen+=len; sum+=$4*len; } END { print sum / tlen }' \
             | tr "\n" "\t" \
             1> "$prefix_pgge"."$n"."$gfa_base".gaf.pgge) 2> >(tee -a "$log_file")
-        ($timer -f "$fmt" peanut \
-            -g "$prefix_pgge"."$n"."$gfa_base".gaf \
-            1>> "$prefix_pgge"."$n"."$gfa_base".gaf.pgge) 2> >(tee -a "$log_file");
+        if [[ 
+            $peanut_bed == false 
+            ]];
+        then            
+            ($timer -f "$fmt" peanut \
+                -g "$prefix_pgge"."$n"."$gfa_base".gaf \
+                1>> "$prefix_pgge"."$n"."$gfa_base".gaf.pgge) 2> >(tee -a "$log_file");
+        else
+            ($timer -f "$fmt" peanut \
+                -g "$prefix_pgge"."$n"."$gfa_base".gaf \
+                -b "$prefix_pgge"."$n"."$gfa_base".bed \
+                1>> "$prefix_pgge"."$n"."$gfa_base".gaf.pgge) 2> >(tee -a "$log_file");
+        fi                
     done
 done
 
