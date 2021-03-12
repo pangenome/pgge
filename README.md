@@ -22,7 +22,7 @@ It has five phases:
 Clone this repository:
 
 ```
-git clone --recursive https://github.com/pangenome/pggb
+git clone --recursive https://github.com/pangenome/pgge
 cd pgge
 ```
 
