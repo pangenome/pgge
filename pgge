@@ -13,6 +13,8 @@ seq_length=false
 step=false
 beehave_R=false
 peanut_bed=false
+ratio_subset=1.0 # TODO subsample_percentage -> -p,--subsample-percentage [N]
+num_subset=false # TODO subsample_number -> -u,--subsample-number [n]
 threads=1
 
 num_gfas=0
@@ -48,6 +50,8 @@ while true ; do
         *) echo "$2" "Internal error!" ; exit 1 ;;
     esac
 done
+
+# TODO Both subsample options can't be set at the same time
 
 if [[
     $input_gaf == false
@@ -151,7 +155,7 @@ param_file=$output_dir/$prefix_pgge.$date.params.yml
 prefix_pgge="$output_dir"/$prefix_pgge
 
 fmt="%C\n%Us user %Ss system %P cpu %es total %MKb max memory"
-timer=/usr/bin/time
+timer=time
 
 # write parameters to log_file:
 echo -e "Starting pgge on `date`\n" > "$log_file"
@@ -256,6 +260,11 @@ then
     do $timer -f "$fmt" splitfa "$prefix_pgge"."$n"."$input_fasta_base" -l "$seq_length" -s "$step" > "$prefix_pgge"."$n"."$input_fasta_base".splitfa.fa; \
     done 2> >(tee -a "$log_file")
 fi
+
+# TODO
+# only take a subset of the reads using shuf
+# shuf -n $(( 112*20/100 )) cerevisiae.pan.fa.fai
+
 
 for gfa in $input_gfa
 do
