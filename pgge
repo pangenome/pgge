@@ -273,11 +273,12 @@ then
     
 fi
 
-# TODO
 # only take a subset of the reads using shuf
 # shuf -n $(( 112*20/100 )) cerevisiae.pan.fa.fai
 # c=`echo 1112*10/100.0 | bc`
 # shuf -n $c ~/Downloads/yeast/cerevisiae.pan.fa.fai | wc -l
+
+# FIXME just play around with the suffx and you are basically done!
 if [[ "$subsample_number" != false ]];
 then
     # did we apply splitfa?
@@ -288,17 +289,11 @@ then
         done 2> >(tee -a "$log_file")
         cut -f 1 "$input_fai" | cut -f 1 -d. | cut -f 1 -d '#' | sort | uniq | while read n; \
         do "$timer" -f "$fmt" shuf -n "$subsample_number" "$prefix_pgge"."$n"."$input_fasta_base".splitfa.fa.fai | cut -f 1 > "$prefix_pgge"."$n"."$input_fasta_base".splitfa.fa.fai.subsamples; \
-            cat "$prefix_pgge"."$n"."$input_fasta_base".splitfa.fa.fai.subsamples | while read name; \
-            # do (echo "$name");
-            # FIXME we overwrite every time!
-            do "$timer" -f "$fmt" samtools faidx "$prefix_pgge"."$n"."$input_fasta_base".splitfa.fa "$name" 1>> "$prefix_pgge"."$n"."$input_fasta_base".splitfa.fa.subsamples.fa; 
-            done 2> >(tee -a "$log_file"); \
         done 2> >(tee -a "$log_file")
-        #do "$timer" -f "$fmt" samtools faidx "$prefix_pgge"."$n"."$input_fasta_base".splitfa.fa "$name" 1>> "$prefix_pgge"."$n"."$input_fasta_base".splitfa.fa.subsamples.fa; \
-        #done 2> >(tee -a "$log_file")
-        echo "AHH"
+        cut -f 1 "$input_fai" | cut -f 1 -d. | cut -f 1 -d '#' | sort | uniq | while read n; \
+        do "$timer" -f "$fmt" xargs samtools faidx "$prefix_pgge"."$n"."$input_fasta_base".splitfa.fa < "$prefix_pgge"."$n"."$input_fasta_base".splitfa.fa.fai.subsamples > "$prefix_pgge"."$n"."$input_fasta_base".splitfa.fa.subsamples.fa; \
+        done 2> >(tee -a "$log_file")
     else 
-        echo "TODO"
     fi
 fi
 
