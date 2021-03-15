@@ -13,14 +13,14 @@ seq_length=false
 step=false
 beehave_R=false
 peanut_bed=false
-ratio_subset=1.0 # TODO subsample_percentage -> -p,--subsample-percentage [N]
-num_subset=false # TODO subsample_number -> -u,--subsample-number [n]
+subsample_percentage=false
+subsample_number=false
 threads=1
 
 num_gfas=0
 num_input_graph_names=0
 
-if [ $# -eq 0 ];
+if [ "$#" -eq 0 ];
 then
     show_help=true
 fi 
@@ -29,7 +29,7 @@ fi
 
 # read the options
 cmd=$0" "$@
-TEMP=`getopt -o g:f:i:n:r:o:l:s:t:hb --long input-gfa:,input-fasta:,input-gaf:,input-graph-names:,beehave-r:,output-dir:,seq-length:,step:,threads:,help,peanut-bed -n 'pgge' -- "$@"`
+TEMP=`getopt -o g:f:i:n:r:o:l:s:p:u:t:hb --long input-gfa:,input-fasta:,input-gaf:,input-graph-names:,beehave-r:,output-dir:,seq-length:,step:,subsample-percentage:,subsample-number:,threads:,help,peanut-bed -n 'pgge' -- "$@"`
 eval set -- "$TEMP"
 
 # extract options and their arguments into variables.
@@ -43,6 +43,8 @@ while true ; do
         -o|--output-dir) output_dir=$2 ; shift 2 ;;
         -l|--seq-length) seq_length=$2 ; shift 2 ;;
         -s|--step) step=$2 ; shift 2 ;;
+        -p|--subsample-percentage) subsample_percentage=$2 ; shift 2 ;;
+        -u|--subsample-number) subsample_number=$2 ; shift 2 ;;
         -b|--peanut-bed) peanut_bed=true ; shift ;;
         -t|--threads) threads=$2 ; shift 2 ;;
         -h|--help) show_help=true ; shift ;;
@@ -54,36 +56,36 @@ done
 # TODO Both subsample options can't be set at the same time
 
 if [[
-    $input_gaf == false
+    "$input_gaf" == false
     ]];
 then
     if [[
-           $input_fasta == false
-        || $input_gfa == false
-        || $beehave_R == false
+           "$input_fasta" == false
+        || "$input_gfa" == false
+        || "$beehave_R" == false
     ]];
     then
     show_help=true
-    >&2 echo "Mandatory arguments -g, -f, -o, -r. If running in GAF-MODE, only -i, -r are required."
+    >&2 echo "Mandatory arguments -g, -f, -r. If running in GAF-MODE, only -i, -r are required."
     fi
 else
     if [[
-           $input_fasta != false
-        || $input_gfa != false
+           "$input_fasta" != false
+        || "$input_gfa" != false
     ]];
     then
     show_help=true
-    >&2 echo "Running in GAF-MODE, only -i, -r are a mandatory argument. Please remove any non GAF-MODE arguments -g, -f, -o, -r."
+    >&2 echo "Running in GAF-MODE, only -i, -r are a mandatory argument. Please remove any non GAF-MODE arguments -g, -f, -r."
     fi
 fi
 
 # do we need to use splitfa?
 if [[
-    $seq_length != false
+    "$seq_length" != false
     ]];
 then
     if [[
-        $step == false
+        "$step" == false
     ]];
     then
         show_help=true
@@ -92,16 +94,22 @@ then
 fi
 
 if [[
-    $step != false
+    "$step" != false
     ]];
 then
     if [[
-        $seq_length == false
+        "$seq_length" == false
     ]];
     then
         show_help=true
         >&2 echo "Mandatory arguments to run splitfa are -l and -s."
     fi
+fi
+
+if [[ "$subsample_number" != false && "$subsample_percentage" != false ]];
+then
+        show_help=true
+        >&2 echo "Only one of -p/--subsample-percentage, -u/--subsample-number can be chosen for the subsampling step."
 fi
 
 prefix_pgge=pgge
@@ -123,20 +131,23 @@ then
     echo
     echo "options:"
     echo "   [evaluation]"
-    echo "    -g, --input-gfa FILE        input GFA file"
-    echo "    -f, --input-fasta FILE      input FASTA file (uncompressed or gzipped)"
-    echo "    -o, --output-dir FILE       output directory"
-    echo "    -r, --beehave-r PATH        path to beehave.R"
-    echo "    -b, --peanut-bed PATH       output BED file"  
-    echo "    -n, --input-graph-names TSV input graph name file: first row is the name of the original input file, second row is the display name in the PNG"    
+    echo "    -g, --input-gfa FILE         input GFA file"
+    echo "    -f, --input-fasta FILE       input FASTA file (uncompressed or gzipped)"
+    echo "    -o, --output-dir FILE        output directory"
+    echo "    -r, --beehave-r PATH         path to beehave.R"
+    echo "    -b, --peanut-bed PATH        output BED file"  
+    echo "    -n, --input-graph-names TSV  input graph name file: first row is the name of the original input file, second row is the display name in the PNG"    
     echo "   [splitfa]"
-    echo "    -l, --seq-length N          length of the splits"
-    echo "    -s, --step N                step size between splits"
+    echo "    -l, --seq-length N           length of the splits"
+    echo "    -s, --step N                 step size between splits"
+    echo "   [subsampling]"
+    echo "    -p, --subsample-percentage N length of the splits"
+    echo "    -u, --subsample-number N     step size between splits"    
     echo "   [evaluation-gaf-mode]"
-    echo "    -i, --input-gaf FILE        input GAF file"
+    echo "    -i, --input-gaf FILE         input GAF file"
     echo "   [general]"
-    echo "    -t, --threads N             number of compute threads to use in parallel steps"
-    echo "    -h, --help                  this text"
+    echo "    -t, --threads N              number of compute threads to use in parallel steps"
+    echo "    -h, --help                   this text"
     echo
     echo "Uses GraphAligner and peanut to evaluate a pangenome graph. Utilizes samtools and splitfa."
     exit
@@ -210,9 +221,9 @@ do
     fi
 done
 
-# TODO find out if #lines == #GFAs
+# find out if #lines == #GFAs
 # echo $num_gfas
-#echo $(wc -l $input_graph_names | cut -f 1 -d " ")
+# echo $(wc -l $input_graph_names | cut -f 1 -d " ")
 if [[ $input_graph_names != false ]];
 then
     num_input_graph_names=$(wc -l $input_graph_names | cut -f 1 -d " ")
@@ -236,10 +247,10 @@ fi
 
 # do we already have a FASTA index for the input_fasta?
 if [[
-    ! -f $input_fasta.fai
+    ! -f "$input_fasta".fai
     ]];
 then
-    $timer -f "$fmt" samtools \
+    "$timer" -f "$fmt" samtools \
     faidx "$input_fasta" \
     2> >(tee -a "$log_file")
 fi
@@ -253,18 +264,46 @@ do $timer -f "$fmt" samtools faidx "$input_fasta" $(grep "$n" "$input_fai" | cut
 done 2> >(tee -a "$log_file")
 
 if [[
-    $splitfa != false
+    "$splitfa" != false
     ]];
 then
     cut -f 1 "$input_fai" | cut -f 1 -d. | cut -f 1 -d '#' | sort | uniq | while read n; \
-    do $timer -f "$fmt" splitfa "$prefix_pgge"."$n"."$input_fasta_base" -l "$seq_length" -s "$step" > "$prefix_pgge"."$n"."$input_fasta_base".splitfa.fa; \
+    do "$timer" -f "$fmt" splitfa "$prefix_pgge"."$n"."$input_fasta_base" -l "$seq_length" -s "$step" > "$prefix_pgge"."$n"."$input_fasta_base".splitfa.fa; \
     done 2> >(tee -a "$log_file")
+    
 fi
 
 # TODO
 # only take a subset of the reads using shuf
 # shuf -n $(( 112*20/100 )) cerevisiae.pan.fa.fai
+# c=`echo 1112*10/100.0 | bc`
+# shuf -n $c ~/Downloads/yeast/cerevisiae.pan.fa.fai | wc -l
+if [[ "$subsample_number" != false ]];
+then
+    # did we apply splitfa?
+    if [[ "$splitfa" != false ]];
+    then
+        cut -f 1 "$input_fai" | cut -f 1 -d. | cut -f 1 -d '#' | sort | uniq | while read n; \
+        do "$timer" -f "$fmt" samtools faidx "$prefix_pgge"."$n"."$input_fasta_base".splitfa.fa; \
+        done 2> >(tee -a "$log_file")
+        cut -f 1 "$input_fai" | cut -f 1 -d. | cut -f 1 -d '#' | sort | uniq | while read n; \
+        do "$timer" -f "$fmt" shuf -n "$subsample_number" "$prefix_pgge"."$n"."$input_fasta_base".splitfa.fa.fai | cut -f 1 > "$prefix_pgge"."$n"."$input_fasta_base".splitfa.fa.fai.subsamples; \
+            cat "$prefix_pgge"."$n"."$input_fasta_base".splitfa.fa.fai.subsamples | while read name; \
+            # do (echo "$name");
+            # FIXME we overwrite every time!
+            do "$timer" -f "$fmt" samtools faidx "$prefix_pgge"."$n"."$input_fasta_base".splitfa.fa "$name" 1>> "$prefix_pgge"."$n"."$input_fasta_base".splitfa.fa.subsamples.fa; 
+            done 2> >(tee -a "$log_file"); \
+        done 2> >(tee -a "$log_file")
+        #do "$timer" -f "$fmt" samtools faidx "$prefix_pgge"."$n"."$input_fasta_base".splitfa.fa "$name" 1>> "$prefix_pgge"."$n"."$input_fasta_base".splitfa.fa.subsamples.fa; \
+        #done 2> >(tee -a "$log_file")
+        echo "AHH"
+    else 
+        echo "TODO"
+    fi
+fi
 
+echo "WE MADE IT"
+exit 
 
 for gfa in $input_gfa
 do
@@ -272,34 +311,34 @@ do
 
     cut -f 1 "$input_fai" | cut -f 1 -d. | cut -f 1 -d '#' | sort | uniq | while read n; \
     do
-        graph_aligner_fasta_input=$prefix_pgge.$n.$input_fasta_base
+        graph_aligner_fasta_input="$prefix_pgge"."$n"."$input_fasta_base"
         if [[
-            $splitfa != false
+            "$splitfa" != false
             ]];
         then
-            graph_aligner_fasta_input=$prefix_pgge.$n.$input_fasta_base.splitfa.fa
+            graph_aligner_fasta_input="$prefix_pgge"."$n"."$input_fasta_base".splitfa.fa
         fi
-        $timer -f "$fmt" GraphAligner \
+        "$timer" -f "$fmt" GraphAligner \
             -g "$gfa" \
             -f "$graph_aligner_fasta_input" \
             -a "$prefix_pgge"."$n"."$gfa_base".gaf \
             -x vg \
             -t "$threads" \
             2> >(tee -a "$log_file")
-        ($timer -f "$fmt" cut -f 2,3,4,16 "$prefix_pgge"."$n"."$gfa_base".gaf \
+        ("$timer" -f "$fmt" cut -f 2,3,4,16 "$prefix_pgge"."$n"."$gfa_base".gaf \
             | sed s/id:f:// \
             | LC_NUMERIC=de_DE.UTF-8 awk '{ len=$3-$2; tlen+=len; sum+=$4*len; } END { print sum / tlen }' \
             | tr "\n" "\t" \
             1> "$prefix_pgge"."$n"."$gfa_base".gaf.pgge) 2> >(tee -a "$log_file")
         if [[ 
-            $peanut_bed == false 
+            "$peanut_bed" == false 
             ]];
         then            
-            ($timer -f "$fmt" peanut \
+            ("$timer" -f "$fmt" peanut \
                 -g "$prefix_pgge"."$n"."$gfa_base".gaf \
                 1>> "$prefix_pgge"."$n"."$gfa_base".gaf.pgge) 2> >(tee -a "$log_file");
         else
-            ($timer -f "$fmt" peanut \
+            ("$timer" -f "$fmt" peanut \
                 -g "$prefix_pgge"."$n"."$gfa_base".gaf \
                 -b "$prefix_pgge"."$n"."$gfa_base".bed \
                 1>> "$prefix_pgge"."$n"."$gfa_base".gaf.pgge) 2> >(tee -a "$log_file");
@@ -312,7 +351,7 @@ else
 ## START gaf_input
 # does the input GFA actually exist?
 if [[
-    ! -f $input_gaf
+    ! -f "$input_gaf"
     ]];
 then
     >&2 echo "'$input_gaf' GAF does not exist! Please correct and re-run pgge."
@@ -322,25 +361,25 @@ fi
 echo "$input_gaf"
 input_gaf_base="$(basename -- "$input_gaf")"
 
-($timer -f "$fmt" cut -f 2,3,4,16 "$input_gaf" \
+("$timer" -f "$fmt" cut -f 2,3,4,16 "$input_gaf" \
     | sed s/id:f:// \
     | LC_NUMERIC=de_DE.UTF-8 awk '{ len=$3-$2; tlen+=len; sum+=$4*len; } END { print sum / tlen }' \
     | tr "\n" "\t" \
     1> "$prefix_pgge"."$input_gaf_base".pgge) 2> >(tee -a "$log_file")
-($timer -f "$fmt" peanut \
+("$timer" -f "$fmt" peanut \
     -g "$input_gaf" \
     1>> "$prefix_pgge"."$input_gaf_base".pgge) 2> >(tee -a "$log_file");
 
 fi
 ## END gaf_input
 
-if [[ $input_graph_names == false ]];
+if [[ "$input_graph_names" == false ]];
 then
     (echo sample.name cons.jump aln.id qsc uniq multi nonaln; ls "$output_dir" | grep gaf | grep pgge$ | while read f; \
     do
     echo "$(echo "$output_dir"/"$f" | cut -f 2 -d .)" "$(echo "$output_dir"/"$f" | cut -f 2 -d @ | cut -f 1 -d.)" "$(cat "$output_dir"/"$f")"; \
     done) | tr ' ' '\t' > "$prefix_pgge".tsv
-    $timer -f "$fmt" Rscript \
+    "$timer" -f "$fmt" Rscript \
         "$beehave_R" "$prefix_pgge".tsv \
         "$prefix_pgge".tsv.png \
         2> >(tee -a "$log_file")
@@ -349,7 +388,7 @@ else
     do
     echo "$(echo "$output_dir"/"$f" | cut -f 2 -d .)" "$(basename $(echo "$output_dir"/"$f"))" "$(cat "$output_dir"/"$f")"; \
     done) | tr ' ' '\t' > "$prefix_pgge".tsv
-    $timer -f "$fmt" Rscript \
+    "$timer" -f "$fmt" Rscript \
         "$beehave_R" "$prefix_pgge".tsv \
         "$prefix_pgge".tsv.png \
         "$input_graph_names" \
