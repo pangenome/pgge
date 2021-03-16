@@ -122,6 +122,16 @@ then
     prefix_pgge="$prefix_pgge"-l$seq_length-s$step
 fi
 
+if [[ "$subsample_number" != false ]];
+then
+    prefix_pgge="$prefix_pgge"-u"$subsample_number"
+fi
+
+if [[ "$subsample_percentage" != false ]];
+then
+    prefix_pgge="$prefix_pgge"-p"$subsample_percentage"
+fi
+
 if [ $show_help ];
 then
     #padding=`printf %${#0}s` # prints as many spaces as the length of $0
@@ -281,68 +291,35 @@ fi
 # shuf -n "$(echo $(cat gammylog.txt | wc -l)*100/100.0 | bc)" gammylog.txt
 if [[ "$subsample_percentage" != false ]];
 then
-    if [[ "$splitfa" != false ]];
-    then
-        cut -f 1 "$input_fai" | cut -f 1 -d. | cut -f 1 -d '#' | sort | uniq | while read n; \
-        do "$timer" -f "$fmt" samtools faidx "$prefix_pgge"."$n"."$input_fasta_base".splitfa.fa; \
-        done 2> >(tee -a "$log_file")
-        cut -f 1 "$input_fai" | cut -f 1 -d. | cut -f 1 -d '#' | sort | uniq | while read n; \
-        do
-            shuf_num="$(echo "$(cat "$prefix_pgge"."$n"."$input_fasta_base".fai | wc -l)"*"$subsample_percentage"/100.0 | bc)"
-            if [[ "$shuf_num" == 0 ]];
-            then
-                shuf_num=1
-            fi 
-            "$timer" -f "$fmt" shuf -n "$shuf_num" "$prefix_pgge"."$n"."$input_fasta_base".splitfa.fa.fai | cut -f 1 > "$prefix_pgge"."$n"."$input_fasta_base".splitfa.fa.fai.subsamples; \
-        done 2> >(tee -a "$log_file")
-        cut -f 1 "$input_fai" | cut -f 1 -d. | cut -f 1 -d '#' | sort | uniq | while read n; \
-        do "$timer" -f "$fmt" xargs samtools faidx "$prefix_pgge"."$n"."$input_fasta_base".splitfa.fa < "$prefix_pgge"."$n"."$input_fasta_base".splitfa.fa.fai.subsamples > "$prefix_pgge"."$n"."$input_fasta_base".splitfa.fa.subsamples.fa; \
-        done 2> >(tee -a "$log_file")
-    else
-        cut -f 1 "$input_fai" | cut -f 1 -d. | cut -f 1 -d '#' | sort | uniq | while read n; \
-        do "$timer" -f "$fmt" samtools faidx "$prefix_pgge"."$n"."$input_fasta_base"; \
-        done 2> >(tee -a "$log_file")
-        cut -f 1 "$input_fai" | cut -f 1 -d. | cut -f 1 -d '#' | sort | uniq | while read n; \
-        do 
-            shuf_num="$(echo "$(cat "$prefix_pgge"."$n"."$input_fasta_base".fai | wc -l)"*"$subsample_percentage"/100.0 | bc)"
-            if [[ "$shuf_num" == 0 ]];
-            then
-                shuf_num=1
-            fi
-            "$timer" -f "$fmt" shuf -n "$shuf_num" "$prefix_pgge"."$n"."$input_fasta_base".fai | cut -f 1 > "$prefix_pgge"."$n"."$input_fasta_base".fai.subsamples; \
-        done 2> >(tee -a "$log_file")
-        cut -f 1 "$input_fai" | cut -f 1 -d. | cut -f 1 -d '#' | sort | uniq | while read n; \
-        do "$timer" -f "$fmt" xargs samtools faidx "$prefix_pgge"."$n"."$input_fasta_base" < "$prefix_pgge"."$n"."$input_fasta_base".fai.subsamples > "$prefix_pgge"."$n"."$input_fasta_base".subsamples.fa; \
-        done 2> >(tee -a "$log_file")
-    fi
+    cut -f 1 "$input_fai" | cut -f 1 -d. | cut -f 1 -d '#' | sort | uniq | while read n; \
+    do "$timer" -f "$fmt" samtools faidx "$prefix_pgge"."$n"."$input_fasta_base""$super_suffix"; \
+    done 2> >(tee -a "$log_file")
+    cut -f 1 "$input_fai" | cut -f 1 -d. | cut -f 1 -d '#' | sort | uniq | while read n; \
+    do 
+        shuf_num="$(echo "$(cat "$prefix_pgge"."$n"."$input_fasta_base""$super_suffix".fai | wc -l)"*"$subsample_percentage"/100.0 | bc)"
+        if [[ "$shuf_num" == 0 ]];
+        then
+            shuf_num=1
+        fi
+        "$timer" -f "$fmt" shuf -n "$shuf_num" "$prefix_pgge"."$n"."$input_fasta_base""$super_suffix".fai | cut -f 1 > "$prefix_pgge"."$n"."$input_fasta_base""$super_suffix".fai.subsamples; \
+    done 2> >(tee -a "$log_file")
+    cut -f 1 "$input_fai" | cut -f 1 -d. | cut -f 1 -d '#' | sort | uniq | while read n; \
+    do "$timer" -f "$fmt" xargs samtools faidx "$prefix_pgge"."$n"."$input_fasta_base""$super_suffix" < "$prefix_pgge"."$n"."$input_fasta_base""$super_suffix".fai.subsamples > "$prefix_pgge"."$n"."$input_fasta_base""$super_suffix".subsamples.fa; \
+    done 2> >(tee -a "$log_file")
     super_suffix="$super_suffix".subsamples.fa
 fi
 
 if [[ "$subsample_number" != false ]];
 then
-    # did we apply splitfa?
-    if [[ "$splitfa" != false ]];
-    then
-        cut -f 1 "$input_fai" | cut -f 1 -d. | cut -f 1 -d '#' | sort | uniq | while read n; \
-        do "$timer" -f "$fmt" samtools faidx "$prefix_pgge"."$n"."$input_fasta_base".splitfa.fa; \
-        done 2> >(tee -a "$log_file")
-        cut -f 1 "$input_fai" | cut -f 1 -d. | cut -f 1 -d '#' | sort | uniq | while read n; \
-        do "$timer" -f "$fmt" shuf -n "$subsample_number" "$prefix_pgge"."$n"."$input_fasta_base".splitfa.fa.fai | cut -f 1 > "$prefix_pgge"."$n"."$input_fasta_base".splitfa.fa.fai.subsamples; \
-        done 2> >(tee -a "$log_file")
-        cut -f 1 "$input_fai" | cut -f 1 -d. | cut -f 1 -d '#' | sort | uniq | while read n; \
-        do "$timer" -f "$fmt" xargs samtools faidx "$prefix_pgge"."$n"."$input_fasta_base".splitfa.fa < "$prefix_pgge"."$n"."$input_fasta_base".splitfa.fa.fai.subsamples > "$prefix_pgge"."$n"."$input_fasta_base".splitfa.fa.subsamples.fa; \
-        done 2> >(tee -a "$log_file")
-    else 
-        cut -f 1 "$input_fai" | cut -f 1 -d. | cut -f 1 -d '#' | sort | uniq | while read n; \
-        do "$timer" -f "$fmt" samtools faidx "$prefix_pgge"."$n"."$input_fasta_base"; \
-        done 2> >(tee -a "$log_file")
-        cut -f 1 "$input_fai" | cut -f 1 -d. | cut -f 1 -d '#' | sort | uniq | while read n; \
-        do "$timer" -f "$fmt" shuf -n "$subsample_number" "$prefix_pgge"."$n"."$input_fasta_base".fai | cut -f 1 > "$prefix_pgge"."$n"."$input_fasta_base".fai.subsamples; \
-        done 2> >(tee -a "$log_file")
-        cut -f 1 "$input_fai" | cut -f 1 -d. | cut -f 1 -d '#' | sort | uniq | while read n; \
-        do "$timer" -f "$fmt" xargs samtools faidx "$prefix_pgge"."$n"."$input_fasta_base" < "$prefix_pgge"."$n"."$input_fasta_base".fai.subsamples > "$prefix_pgge"."$n"."$input_fasta_base".subsamples.fa; \
-        done 2> >(tee -a "$log_file")
-    fi
+    cut -f 1 "$input_fai" | cut -f 1 -d. | cut -f 1 -d '#' | sort | uniq | while read n; \
+    do "$timer" -f "$fmt" samtools faidx "$prefix_pgge"."$n"."$input_fasta_base""$super_suffix"; \
+    done 2> >(tee -a "$log_file")
+    cut -f 1 "$input_fai" | cut -f 1 -d. | cut -f 1 -d '#' | sort | uniq | while read n; \
+    do "$timer" -f "$fmt" shuf -n "$subsample_number" "$prefix_pgge"."$n"."$input_fasta_base""$super_suffix".fai | cut -f 1 > "$prefix_pgge"."$n"."$input_fasta_base""$super_suffix".fai.subsamples; \
+    done 2> >(tee -a "$log_file")
+    cut -f 1 "$input_fai" | cut -f 1 -d. | cut -f 1 -d '#' | sort | uniq | while read n; \
+    do "$timer" -f "$fmt" xargs samtools faidx "$prefix_pgge"."$n"."$input_fasta_base""$super_suffix" < "$prefix_pgge"."$n"."$input_fasta_base""$super_suffix".fai.subsamples > "$prefix_pgge"."$n"."$input_fasta_base""$super_suffix".subsamples.fa; \
+    done 2> >(tee -a "$log_file")
     super_suffix="$super_suffix".subsamples.fa
 fi 
 
