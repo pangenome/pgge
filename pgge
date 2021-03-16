@@ -389,7 +389,7 @@ if [[ "$input_graph_names" == false ]];
 then
     (echo sample.name cons.jump aln.id qsc uniq multi nonaln; ls "$output_dir" | grep gaf | grep pgge$ | while read f; \
     do
-    echo "$(echo "$output_dir"/"$f" | cut -f 2 -d .)" "$(echo "$output_dir"/"$f" | cut -f 2 -d @ | cut -f 1 -d.)" "$(cat "$output_dir"/"$f")"; \
+    echo "$(echo "$f" | cut -f 2 -d .)" "$(echo "$f" | cut -f 2 -d @ | cut -f 1 -d.)" "$(cat "$output_dir"/"$f")"; \
     done) | tr ' ' '\t' > "$prefix_pgge".tsv
     "$timer" -f "$fmt" Rscript \
         "$beehave_R" "$prefix_pgge".tsv \
@@ -398,7 +398,7 @@ then
 else 
     (echo sample.name cons.jump aln.id qsc uniq multi nonaln; ls "$output_dir" | grep gaf | grep pgge$ | while read f; \
     do
-    echo "$(echo "$output_dir"/"$f" | cut -f 2 -d .)" "$(basename $(echo "$output_dir"/"$f"))" "$(cat "$output_dir"/"$f")"; \
+    echo "$(echo "$f" | cut -f 2 -d .)" "$(basename $(echo "$output_dir"/"$f"))" "$(cat "$output_dir"/"$f")"; \
     done) | tr ' ' '\t' > "$prefix_pgge".tsv
     "$timer" -f "$fmt" Rscript \
         "$beehave_R" "$prefix_pgge".tsv \
