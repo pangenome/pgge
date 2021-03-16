@@ -45,7 +45,7 @@ input GFA, this is not required.
 
 Optionally, you can set `-b` to write the unmapped regions to [BED](https://m.ensembl.org/info/website/upload/bed.html). 
 
-If you only want to enable random subsampling to **reduce alignment time**, you can select either `-p/--subsample-percentage` or `-u/--subsample-number`.
+If you want to enable random subsampling to **reduce alignment time**, you can select either `-p/--subsample-percentage` or `-u/--subsample-number`.
 
 :warning: _`pgge`_ summarizes results by sample name. If you have
 ```
