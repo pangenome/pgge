@@ -11,11 +11,13 @@ It has five phases:
 
 2. _[splitfa](https://github.com/ekg/splitfa)_: (*split sequences*) -- SHORT DESCRIPTION. TODO.
 
-3. _[GraphAligner](https://github.com/maickrau/GraphAligner)_: (*alignment*) -- SHORT DESCRIPTION. TODO.
+3. _`SubSampling`_: (*pick a subset of random sequences*) -- SHORT DESCRIPTION. TODO.
 
-4. _[peanut](https://github.com/subwaystation/rs-peanut)_: (*alignment evaluation*) -- SHORT DESCRIPTION. TODO.
+4. _[GraphAligner](https://github.com/maickrau/GraphAligner)_: (*alignment*) -- SHORT DESCRIPTION. TODO.
 
-5. _[beehave.R](https://github.com/pangenome/pgge/tree/master/scripts/beehave.R)_: (*plot evaluation results*) -- SHORT DESCRIPTION. TODO.
+5. _[peanut](https://github.com/subwaystation/rs-peanut)_: (*alignment evaluation*) -- SHORT DESCRIPTION. TODO.
+
+6. _[beehave.R](https://github.com/pangenome/pgge/tree/master/scripts/beehave.R)_: (*plot evaluation results*) -- SHORT DESCRIPTION. TODO.
 
 ## general usage
 
