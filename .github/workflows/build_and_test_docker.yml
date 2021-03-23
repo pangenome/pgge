@@ -10,4 +10,4 @@ jobs:
       - name: Build the Docker image
         run: docker build . --file Dockerfile --tag pgge
       - name: Run a test on the DRB1-3123 dataset
-        run: docker run -it -v ${PWD}/data/:/data pgge "pgge -g "/data/HLA/DRB1-3123/*.consensus*.gfa" -f /data/HLA/DRB1-3123/DRB1-3123.fa -r /scripts/beehave.R -t 2 -o /data/HLA/DRB1-3123/pgge_docker -l 1000 -s 1000 -p 100"
+        run: docker run -v ${PWD}/data/:/data pgge "pgge -g "/data/HLA/DRB1-3123/*.consensus*.gfa" -f /data/HLA/DRB1-3123/DRB1-3123.fa -r /scripts/beehave.R -t 2 -o /data/HLA/DRB1-3123/pgge_docker -l 1000 -s 1000 -p 100"
