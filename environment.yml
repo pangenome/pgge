@@ -1,0 +1,11 @@
+name: pgge-dev
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - conda-forge::r-base=4.0.3
+  - conda-forge::r-devtools=2.3.2
+  - conda-forge::r-ggrepel=0.9.1
+  - conda-forge::r-gridextra=2.3
+  - conda-forge::r-tidyverse=1.3.0

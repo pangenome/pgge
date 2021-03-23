@@ -135,6 +135,47 @@ _`pgge`_ also generates a visualization of the results `pgge_yeast/pgge-l100000-
 
 6. _[R](https://www.r-project.org/)_ with packages _[tidyverse](https://www.tidyverse.org/)_, _[ggrepel](https://www.rdocumentation.org/packages/ggrepel/versions/0.9.1)_, _[gridExtra](https://www.rdocumentation.org/packages/gridExtra/versions/2.3)_ installed.
 
+### docker
+
+To simplify installation and versioning, we have an automated GitHub action that pushes the current docker build to the GitHub registry.
+To use it, first pull the actual image:
+
+```sh
+docker pull ghcr.io/pangenome/pgge:latest
+```
+
+Or if you want to pull a specific snapshot from [https://github.com/orgs/pangenome/packages/container/package/pgge](https://github.com/orgs/pangenome/packages/container/package/pgge):
+
+```sh
+docker pull ghcr.io/pangenome/pgge:TAG
+```
+
+Going in the `pgge` directory
+
+```sh
+git clone --recursive https://github.com/pangenome/pgge.git
+cd pgge
+```
+
+you can run the container using the example [DRB1-3123](data/HLA/DRB1-3123) provided in this repo:
+```sh
+docker run -it -v ${PWD}/data/:/data pangenome/pgge "pgge -g "/data/HLA/DRB1-3123/*.consensus*.gfa" -f /data/HLA/DRB1-3123/DRB1-3123.fa -r /scripts/beehave.R -t 16 -o /data/HLA/DRB1-3123/pgge_docker -l 1000 -s 1000 -p 100"
+```
+
+The `-v` argument of `docker run` always expects a full path: `If you intended to pass a host directory, use absolute path.` This is taken care of by using `${PWD}`.
+
+If you want to experiment around, you can build a docker image locally using the `Dockerfile`:
+
+```sh
+docker build -t ${USER}/pgge:latest .
+```
+
+Staying in the `pgge` directory, we can run `pgge` with the locally build image:
+
+```sh
+docker run -it -v ${PWD}/data/:/data ${USER}/pgge "pgge -g "/data/HLA/DRB1-3123/*.consensus*.gfa" -f /data/HLA/DRB1-3123/DRB1-3123.fa -r /scripts/beehave.R -t 16 -o /data/HLA/DRB1-3123/pgge_docker -l 1000 -s 1000 -p 100"
+```
+
 ## TODOs
 - [x] _`pgge`_ should accept a list of GFA files as input (_path/to/files/\*.consensus\*.gfa_) and output the summarized results in one PNG
 - [x] Integrate https://github.com/ekg/splitfa as an option to prepare the input FASTA.
@@ -146,10 +187,10 @@ _`pgge`_ also generates a visualization of the results `pgge_yeast/pgge-l100000-
 - [ ] Add possibility to input several GAF files. Make sure the user can input a list of samples for the GAFs.
 - [ ] The user should be able to select options for GraphAligner.
 - [ ] Add a toolchain that compares the query alignments with the exact nodes they aligned to in the graph.
-- [ ] Add Dockerfile.
-- [ ] Add a CI building the Dockerfile and emitting evaluation metrics for all tools using `HLA-Zoo` data.
+- [x] Add Dockerfile.
+- [x] Add a CI building the Dockerfile and emitting evaluation metrics for all tools using `HLA-Zoo` data.
 - [ ] Add usage examples for _`minigraph`_, _`cactus`_, and _`SibeliaZ`_.
-- [ ] Integrate into nf-core/pangenome pipeline.
+- [ ] Integrate into nf-core/pangenome pipeline. `HALFWAY THERE`.
 
 ## authors
 
