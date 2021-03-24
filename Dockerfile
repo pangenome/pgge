@@ -24,7 +24,7 @@ RUN apt-get update \
         pkg-config \
         bc \
         time \
-        ps \
+        procps \
         libxml2-dev libssl-dev libcurl4-openssl-dev \ 
         apt-transport-https software-properties-common dirmngr gpg-agent \ 
         && rm -rf /var/lib/apt/lists/*
