@@ -15,6 +15,8 @@ beehave_R=false
 peanut_bed=false
 subsample_percentage=false
 subsample_number=false
+alignment_mode="dbg"
+graphaligner_vg_mode=false
 threads=1
 
 num_gfas=0
@@ -29,7 +31,7 @@ fi
 
 # read the options
 cmd=$0" "$@
-TEMP=`getopt -o g:f:i:n:r:o:l:s:p:u:t:hb --long input-gfa:,input-fasta:,input-gaf:,input-graph-names:,beehave-r:,output-dir:,seq-length:,step:,subsample-percentage:,subsample-number:,threads:,help,peanut-bed -n 'pgge' -- "$@"`
+TEMP=`getopt -o g:f:i:n:r:o:l:s:p:u:t:hbv --long input-gfa:,input-fasta:,input-gaf:,input-graph-names:,beehave-r:,output-dir:,seq-length:,step:,subsample-percentage:,subsample-number:,threads:,help,peanut-bed,graphaligner-vg-mode -n 'pgge' -- "$@"`
 eval set -- "$TEMP"
 
 # extract options and their arguments into variables.
@@ -46,6 +48,7 @@ while true ; do
         -p|--subsample-percentage) subsample_percentage=$2 ; shift 2 ;;
         -u|--subsample-number) subsample_number=$2 ; shift 2 ;;
         -b|--peanut-bed) peanut_bed=true ; shift ;;
+        -v|--graphaligner-vg-mode) graphaligner_vg_mode=true ; shift ;;
         -t|--threads) threads=$2 ; shift 2 ;;
         -h|--help) show_help=true ; shift ;;
         --) shift ; break ;;
@@ -132,6 +135,11 @@ then
     prefix_pgge="$prefix_pgge"-p"$subsample_percentage"
 fi
 
+if [[ "$graphaligner_vg_mode" != false ]];
+then    
+    alignment_mode="vg"
+fi
+
 if [ $show_help ];
 then
     #padding=`printf %${#0}s` # prints as many spaces as the length of $0
@@ -147,6 +155,7 @@ then
     echo "    -r, --beehave-r PATH         path to beehave.R"
     echo "    -b, --peanut-bed PATH        output BED file"  
     echo "    -n, --input-graph-names TSV  input graph name file: first row is the name of the original input file, second row is the display name in the PNG"    
+    echo "    -v, --graphaligner-vg-mode   run GraphAligner with -x vg (default is -x dbg)"    
     echo "   [splitfa]"
     echo "    -l, --seq-length N           length of the splits"
     echo "    -s, --step N                 step size between splits"
@@ -334,7 +343,7 @@ do
             -g "$gfa" \
             -f "$graph_aligner_fasta_input" \
             -a "$prefix_pgge"."$n"."$gfa_base".gaf \
-            -x vg \
+            -x "$alignment_mode" \
             -t "$threads" \
             2> >(tee -a "$log_file")
         ("$timer" -f "$fmt" cut -f 2,3,4,16 "$prefix_pgge"."$n"."$gfa_base".gaf \
