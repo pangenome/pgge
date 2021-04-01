@@ -159,8 +159,9 @@ cd pgge
 
 you can run the container using the example [DRB1-3123](data/HLA/DRB1-3123) provided in this repo:
 ```sh
-docker run -it -v ${PWD}/data/:/data pangenome/pgge "pgge -g "/data/HLA/DRB1-3123/*.consensus*.gfa" -f /data/HLA/DRB1-3123/DRB1-3123.fa -r /scripts/beehave.R -t 16 -o /data/HLA/DRB1-3123/pgge_docker -l 1000 -s 1000 -p 100"
+docker run -it -v ${PWD}/data/:/data pangenome/pgge "pgge -g '/data/HLA/DRB1-3123/*.consensus*.gfa' -f /data/HLA/DRB1-3123/DRB1-3123.fa -r /scripts/beehave.R -t 16 -o /data/HLA/DRB1-3123/pgge_docker -l 1000 -s 1000 -p 100"
 ```
+:warning: In contrast to running `pgge` from the command line, when running in a docker container, we have to use `'` instead of `"` in order to ensure that the regex is parsed properly.
 
 The `-v` argument of `docker run` always expects a full path: `If you intended to pass a host directory, use absolute path.` This is taken care of by using `${PWD}`.
 
@@ -173,7 +174,7 @@ docker build -t ${USER}/pgge:latest .
 Staying in the `pgge` directory, we can run `pgge` with the locally build image:
 
 ```sh
-docker run -it -v ${PWD}/data/:/data ${USER}/pgge "pgge -g "/data/HLA/DRB1-3123/*.consensus*.gfa" -f /data/HLA/DRB1-3123/DRB1-3123.fa -r /scripts/beehave.R -t 16 -o /data/HLA/DRB1-3123/pgge_docker -l 1000 -s 1000 -p 100"
+docker run -it -v ${PWD}/data/:/data ${USER}/pgge 'pgge -g "/data/HLA/DRB1-3123/*.consensus*.gfa' -f /data/HLA/DRB1-3123/DRB1-3123.fa -r /scripts/beehave.R -t 16 -o /data/HLA/DRB1-3123/pgge_docker -l 1000 -s 1000 -p 100"
 ```
 
 ## TODOs
