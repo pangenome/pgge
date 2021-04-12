@@ -344,6 +344,7 @@ do
             -f "$graph_aligner_fasta_input" \
             -a "$prefix_pgge"."$n"."$gfa_base".gaf \
             -x "$alignment_mode" \
+            --precise-clipping 0.501 \
             -t "$threads" \
             2> >(tee -a "$log_file")
         ("$timer" -f "$fmt" cut -f 2,3,4,16 "$prefix_pgge"."$n"."$gfa_base".gaf \
